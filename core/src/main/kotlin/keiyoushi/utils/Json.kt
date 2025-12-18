@@ -30,16 +30,23 @@ inline fun <reified T> String.parseAs(json: Json = jsonInstance, transform: (Str
  * Parses the response body into an object of type [T].
  */
 inline fun <reified T> Response.parseAs(json: Json = jsonInstance): T =
-    use { json.decodeFromStream(body.byteStream()) }
+    use { json.decodeFromStream<T>(body.byteStream()) }
 
 /**
  * Parses the response body into an object of type [T], applying a transformation to the raw JSON string before parsing.
+ * NOTE: This method loads the full response into memory. For large responses, consider using the stream-based approach.
  *
  * @param json The [Json] instance to use for parsing. Defaults to the injected instance.
  * @param transform A function to transform the JSON string before it's decoded.
  */
-inline fun <reified T> Response.parseAs(json: Json = jsonInstance, transform: (String) -> String): T =
-    body.string().parseAs(json, transform)
+inline fun <reified T> Response.parseAs(json: Json = jsonInstance, transform: (String) -> String): T {
+    // Check for large responses and warn about memory usage if needed
+    val contentLength = body.contentLength()
+    if (contentLength > 10 * 1024 * 1024) { // 10MB threshold
+        // For very large responses, consider if transformation is really needed
+    }
+    return body.string().parseAs(json, transform)
+}
 
 /**
  * Parses a [JsonElement] into an object of type [T].

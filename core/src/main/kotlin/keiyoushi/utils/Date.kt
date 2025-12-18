@@ -5,11 +5,12 @@ import java.text.SimpleDateFormat
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun SimpleDateFormat.tryParse(date: String?): Long {
-    date ?: return 0L
+    if (date == null) return 0L
 
     return try {
-        parse(date)?.time ?: 0L
-    } catch (_: ParseException) {
+        val parsedDate = parse(date)
+        parsedDate?.time ?: 0L
+    } catch (e: ParseException) {
         0L
     }
 }

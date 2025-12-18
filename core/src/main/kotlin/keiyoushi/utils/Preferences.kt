@@ -6,6 +6,9 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+// Cache for application instance to avoid repeated Injekt lookups
+private val application: Application by lazy { Injekt.get<Application>() }
+
 /**
  * Returns the [SharedPreferences] associated with current source id
  */
@@ -25,4 +28,4 @@ inline fun HttpSource.getPreferencesLazy(
  */
 @Suppress("NOTHING_TO_INLINE")
 inline fun getPreferences(sourceId: Long): SharedPreferences =
-    Injekt.get<Application>().getSharedPreferences("source_$sourceId", 0x0000)
+    application.getSharedPreferences("source_$sourceId", 0x0000)
