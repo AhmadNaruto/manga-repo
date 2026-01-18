@@ -185,7 +185,7 @@ class MissKon : ConfigurableSource, ParsedHttpSource() {
 
         val dateUpload = FULL_DATE_FORMAT.tryParse(dateUploadStr)
         if (preferences.splitPages) {
-            val maxPage = doc.select("div.page-link:first-of-type a.post-page-numbers").last()?.text()?.toIntOrNull() ?: 1
+            val maxPage = doc.select("div.page-link a.post-page-numbers").last()?.text()?.toIntOrNull() ?: 1
             return (maxPage downTo 1).map { page ->
                 SChapter.create().apply {
                     setUrlWithoutDomain("${manga.url}/$page")
@@ -227,7 +227,7 @@ class MissKon : ConfigurableSource, ParsedHttpSource() {
 
     private suspend fun pageListMerge(document: Document): List<Page> {
         val pages = document
-            .select("div.page-link:first-of-type a")
+            .select("div.page-link a.post-page-numbers")
             .mapNotNull {
                 it.absUrl("href")
             }
