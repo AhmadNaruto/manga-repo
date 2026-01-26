@@ -14,7 +14,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 class Doujinku :
     MangaThemesia(
         "Doujinku",
-        "https://doujinku.xyz",
+        "https://doujinku.org",
         "id",
         dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale("id")),
     ),
