@@ -8,11 +8,13 @@ import eu.kanade.tachiyomi.source.ConfigurableSource
 import keiyoushi.utils.getPreferences
 import java.text.SimpleDateFormat
 import java.util.Locale
+import org.jsoup.nodes.Document
+import eu.kanade.tachiyomi.source.model.SManga
 
 class Doujinku :
     MangaThemesia(
         "Doujinku",
-        "https://doujinku.org",
+        "https://doujinku.xyz",
         "id",
         dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale("id")),
     ),
@@ -27,6 +29,37 @@ class Doujinku :
                     .putString(DEFAULT_BASE_URL_PREF, super.baseUrl)
                     .apply()
             }
+        }
+    }
+    override val seriesTitleSelector = "div.seriestucon > div.seriestucontent > div.seriestucontl > div.thumb > img"
+    
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        document.selectFirst(seriesDetailsSelector)?.let { seriesDetails ->
+            title = seriesDetails.selectFirst(seriesTitleSelector)!!.attr("alt")
+            artist = seriesDetails.selectFirst(seriesArtistSelector)?.ownText().removeEmptyPlaceholder()
+            author = seriesDetails.selectFirst(seriesAuthorSelector)?.ownText().removeEmptyPlaceholder()
+            description = seriesDetails.select(seriesDescriptionSelector).joinToString("\n") { it.text() }.trim()
+            // Add alternative name to manga description
+            val altName = seriesDetails.selectFirst(seriesAltNameSelector)?.ownText().takeIf { it.isNullOrBlank().not() }
+            altName?.let {
+                description = "$description\n\n$altNamePrefix$altName".trim()
+            }
+            val genres = seriesDetails.select(seriesGenreSelector).map { it.text() }.toMutableList()
+            // Add series type (manga/manhwa/manhua/other) to genre
+            seriesDetails.selectFirst(seriesTypeSelector)?.ownText().takeIf { it.isNullOrBlank().not() }?.let { genres.add(it) }
+            genre = genres.map { genre ->
+                genre.lowercase(Locale.forLanguageTag(lang)).replaceFirstChar { char ->
+                    if (char.isLowerCase()) {
+                        char.titlecase(Locale.forLanguageTag(lang))
+                    } else {
+                        char.toString()
+                    }
+                }
+            }
+                .joinToString { it.trim() }
+
+            status = seriesDetails.selectFirst(seriesStatusSelector)?.text().parseStatus()
+            thumbnail_url = seriesDetails.select(seriesThumbnailSelector).imgAttr()
         }
     }
 
