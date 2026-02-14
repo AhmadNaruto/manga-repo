@@ -139,7 +139,7 @@ class Hitomi(
     private suspend fun hitomiSearch(
         query: String,
         filters: FilterList,
-        language: String = "all",
+        language: String = "indonesian",
     ): List<Int> =
         coroutineScope {
             var sortBy: Pair<String?, String> = Pair(null, "index")
