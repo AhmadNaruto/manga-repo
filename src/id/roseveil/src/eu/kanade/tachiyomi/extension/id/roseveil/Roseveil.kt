@@ -125,7 +125,7 @@ class Roseveil : HttpSource() {
         author = data.author
         artist = data.artist
         description = data.synopsis
-        genre = data.genres.joinToString { it.name }
+        genre = data.genres?.joinToString { it.name }
         status = when (data.status?.uppercase()) {
             "ONGOING" -> SManga.ONGOING
             "COMPLETED" -> SManga.COMPLETED
@@ -148,14 +148,14 @@ class Roseveil : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val data = response.parseAs<MangaDetailDto>()
         val seriesSlug = data.slug
-        return data.units.map { unit ->
+        return data.units?.map { unit ->
             SChapter.create().apply {
                 url = "$seriesSlug/chapter/${unit.slug}"
                 name = "Chapter ${formatChapterNumber(unit.number)}"
                 chapter_number = unit.number.toFloatOrNull() ?: -1f
                 date_upload = dateFormat.tryParse(unit.date)
             }
-        }
+        } ?: emptyList()
     }
 
     // =============================== Page List ====================================
@@ -168,9 +168,9 @@ class Roseveil : HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val data = response.parseAs<PageListDto>()
-        return data.chapter.pages.map { page ->
+        return data.chapter?.pages?.map { page ->
             Page(page.index - 1, "", page.url)
-        }
+        } ?: emptyList()
     }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
@@ -186,13 +186,13 @@ class Roseveil : HttpSource() {
     // =============================== Utilities ====================================
     private fun parseMangaPage(response: Response): MangasPage {
         val data = response.parseAs<SearchResponseDto>()
-        val mangas = data.data.map { item ->
+        val mangas = data.data?.map { item ->
             SManga.create().apply {
                 url = item.slug
                 title = item.title
                 thumbnail_url = item.thumbnail
             }
-        }
+        } ?: emptyList()
         return MangasPage(mangas, data.page < data.totalPages)
     }
 
