@@ -100,6 +100,42 @@ class GenreFilter :
         ),
     )
 
+class ColorFilter :
+    UriPartFilter(
+        "Warna",
+        arrayOf(
+            Pair("Semua", ""),
+            Pair("Berwarna", "colored"),
+            Pair("Hitam Putih", "black_and_white"),
+        ),
+    )
+
+class ReadingFormatFilter :
+    UriPartFilter(
+        "Format Bacaan",
+        arrayOf(
+            Pair("Semua", ""),
+            Pair("Webtoon", "webtoon"),
+            Pair("Manga", "manga"),
+        ),
+    )
+
+class AuthorFilter :
+    UriPartFilter(
+        "Penulis",
+        arrayOf(
+            Pair("Semua", ""),
+        ),
+    )
+
+class ArtistFilter :
+    UriPartFilter(
+        "Artist",
+        arrayOf(
+            Pair("Semua", ""),
+        ),
+    )
+
 open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) : Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
     fun toUriPart() = vals[state].second
 }

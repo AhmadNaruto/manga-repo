@@ -8,12 +8,13 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import keiyoushi.utils.parseAs
+import eu.kanade.tachiyomi.util.asJsoup
 import keiyoushi.utils.tryParse
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Element
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
@@ -28,8 +29,6 @@ class Roseveil : HttpSource() {
 
     override val baseUrl = "https://roseveil.org"
 
-    private val apiUrl = "https://api.roseveil.org/api"
-
     override val lang = "id"
 
     override val supportsLatest = true
@@ -43,12 +42,19 @@ class Roseveil : HttpSource() {
 
     // ============================== Popular & Latest ==============================
     override fun popularMangaRequest(page: Int): Request {
-        val url = "$apiUrl/search".toHttpUrl().newBuilder().apply {
-            addQueryParameter("type", "COMIC")
-            addQueryParameter("limit", "20")
-            addQueryParameter("page", page.toString())
+        val url = "$baseUrl/allcomic".toHttpUrl().newBuilder().apply {
+            addQueryParameter("q", "")
+            addQueryParameter("status", "")
+            addQueryParameter("genre", "")
+            addQueryParameter("comic_type", "")
+            addQueryParameter("color_format", "")
+            addQueryParameter("reading_format", "")
+            addQueryParameter("author", "")
+            addQueryParameter("artist", "")
+            addQueryParameter("publisher", "")
             addQueryParameter("sort", "views")
             addQueryParameter("order", "desc")
+            addQueryParameter("page", page.toString())
         }.build()
 
         return GET(url, headers)
@@ -57,12 +63,19 @@ class Roseveil : HttpSource() {
     override fun popularMangaParse(response: Response): MangasPage = parseMangaPage(response)
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val url = "$apiUrl/search".toHttpUrl().newBuilder().apply {
-            addQueryParameter("type", "COMIC")
-            addQueryParameter("limit", "20")
-            addQueryParameter("page", page.toString())
+        val url = "$baseUrl/allcomic".toHttpUrl().newBuilder().apply {
+            addQueryParameter("q", "")
+            addQueryParameter("status", "")
+            addQueryParameter("genre", "")
+            addQueryParameter("comic_type", "")
+            addQueryParameter("color_format", "")
+            addQueryParameter("reading_format", "")
+            addQueryParameter("author", "")
+            addQueryParameter("artist", "")
+            addQueryParameter("publisher", "")
             addQueryParameter("sort", "new")
             addQueryParameter("order", "desc")
+            addQueryParameter("page", page.toString())
         }.build()
 
         return GET(url, headers)
@@ -72,21 +85,14 @@ class Roseveil : HttpSource() {
 
     // =============================== Search =======================================
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$apiUrl/search".toHttpUrl().newBuilder().apply {
-            addQueryParameter("type", "COMIC")
-            addQueryParameter("limit", "20")
+        val url = "$baseUrl/allcomic".toHttpUrl().newBuilder().apply {
+            addQueryParameter("q", query)
             addQueryParameter("page", page.toString())
-
-            if (query.isNotBlank()) {
-                addQueryParameter("q", query)
-            }
 
             filters.forEach { filter ->
                 when (filter) {
                     is StatusFilter -> {
-                        if (filter.toUriPart().isNotBlank()) {
-                            addQueryParameter("status", filter.toUriPart())
-                        }
+                        addQueryParameter("status", filter.toUriPart())
                     }
                     is SortFilter -> {
                         addQueryParameter("sort", filter.toUriPart())
@@ -95,14 +101,22 @@ class Roseveil : HttpSource() {
                         addQueryParameter("order", filter.toUriPart())
                     }
                     is TypeFilter -> {
-                        if (filter.toUriPart().isNotBlank()) {
-                            addQueryParameter("subtype", filter.toUriPart())
-                        }
+                        addQueryParameter("comic_type", filter.toUriPart())
                     }
                     is GenreFilter -> {
-                        if (filter.toUriPart().isNotBlank()) {
-                            addQueryParameter("genre", filter.toUriPart())
-                        }
+                        addQueryParameter("genre", filter.toUriPart())
+                    }
+                    is ColorFilter -> {
+                        addQueryParameter("color_format", filter.toUriPart())
+                    }
+                    is ReadingFormatFilter -> {
+                        addQueryParameter("reading_format", filter.toUriPart())
+                    }
+                    is AuthorFilter -> {
+                        addQueryParameter("author", filter.toUriPart())
+                    }
+                    is ArtistFilter -> {
+                        addQueryParameter("artist", filter.toUriPart())
                     }
                     else -> {}
                 }
@@ -117,24 +131,39 @@ class Roseveil : HttpSource() {
     // =============================== Manga Details ================================
     override fun getMangaUrl(manga: SManga): String = "$baseUrl/comic/${manga.url}"
 
-    override fun mangaDetailsRequest(manga: SManga): Request = GET("$apiUrl/series/comic/${manga.url}", headers)
+    override fun mangaDetailsRequest(manga: SManga): Request = GET("$baseUrl/comic/${manga.url}", headers)
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val data = response.parseAs<MangaDetailDto>()
-        title = data.title
-        author = data.author
-        artist = data.artist
-        description = data.synopsis
-        genre = data.genres.joinToString { it.name }
-        status = when (data.status?.uppercase()) {
-            "ONGOING" -> SManga.ONGOING
-            "COMPLETED" -> SManga.COMPLETED
-            "HIATUS" -> SManga.ON_HIATUS
-            "CANCELED" -> SManga.CANCELLED
-            else -> SManga.UNKNOWN
+        val document = response.asJsoup()
+
+        title = document.selectFirst("h1.card-title, h1.text-dark")?.text() ?: ""
+
+        thumbnail_url = document.selectFirst("img.card-img-top, img.img-fluid")?.absUrl("src")
+
+        // Parse metadata from table or list
+        document.select("div.card-body table tr, div.info-block").forEach { row ->
+            val label = row.selectFirst("td:first-child, strong, .label")?.text()?.lowercase() ?: ""
+            val value = row.selectFirst("td:last-child, span")?.text() ?: ""
+
+            when {
+                label.contains("author") -> author = value
+                label.contains("artist") -> artist = value
+                label.contains("status") -> status = parseStatus(value)
+                label.contains("genre") -> genre = value
+            }
         }
-        thumbnail_url = data.thumbnail
+
+        description = document.selectFirst("div.synopsis, div.description, p:contains(Sinopsis)")?.text()
+
         initialized = true
+    }
+
+    private fun parseStatus(status: String): Int = when {
+        status.contains("ongoing", ignoreCase = true) -> SManga.ONGOING
+        status.contains("completed", ignoreCase = true) -> SManga.COMPLETED
+        status.contains("hiatus", ignoreCase = true) -> SManga.ON_HIATUS
+        status.contains("canceled", ignoreCase = true) || status.contains("cancelled", ignoreCase = true) -> SManga.CANCELLED
+        else -> SManga.UNKNOWN
     }
 
     // =============================== Chapters =====================================
@@ -146,31 +175,42 @@ class Roseveil : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val data = response.parseAs<MangaDetailDto>()
-        val seriesSlug = data.slug
-        return data.units.map { unit ->
+        val document = response.asJsoup()
+        val chapters = mutableListOf<SChapter>()
+
+        // Parse chapters from HTML
+        document.select("ul.chapter-list li, div.chapter-list a, a.chapter-item").forEach { element ->
             SChapter.create().apply {
-                url = "$seriesSlug/chapter/${unit.slug}"
-                name = "Chapter ${formatChapterNumber(unit.number)}"
-                chapter_number = unit.number.toFloatOrNull() ?: -1f
-                date_upload = dateFormat.tryParse(unit.date)
+                setUrlWithoutDomain(element.attr("href"))
+                name = element.selectFirst(".chapter-name, span.title")?.text() ?: element.text()
+                chapter_number = element.attr("data-num").toFloatOrNull() ?: -1f
+                date_upload = element.selectFirst(".chapter-date, time")?.text()?.let { dateFormat.tryParse(it) } ?: 0L
+                chapters.add(this)
             }
         }
+
+        return chapters.reversed()
     }
 
     // =============================== Page List ====================================
-    override fun pageListRequest(chapter: SChapter): Request {
-        val parts = chapter.url.split("/")
-        val seriesSlug = parts[0]
-        val chapterSlug = parts[2]
-        return GET("$apiUrl/series/comic/$seriesSlug/chapter/$chapterSlug", headers)
-    }
+    override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl/comic/${chapter.url}", headers)
 
     override fun pageListParse(response: Response): List<Page> {
-        val data = response.parseAs<PageListDto>()
-        return data.chapter.pages.map { page ->
-            Page(page.index - 1, "", page.url)
+        val document = response.asJsoup()
+        val pages = mutableListOf<Page>()
+
+        // Parse pages from chapter HTML
+        document.select("div.chapter-content img, div.reading-content img").forEachIndexed { index, element ->
+            pages.add(
+                Page(
+                    index,
+                    "",
+                    element.absUrl("src").ifEmpty { element.absUrl("data-src") },
+                ),
+            )
         }
+
+        return pages
     }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
@@ -185,15 +225,27 @@ class Roseveil : HttpSource() {
 
     // =============================== Utilities ====================================
     private fun parseMangaPage(response: Response): MangasPage {
-        val data = response.parseAs<SearchResponseDto>()
-        val mangas = data.data.map { item ->
+        val document = response.asJsoup()
+
+        // Parse manga list from web HTML
+        val mangas = document.select("div.card-body a.text-dark").map { element ->
             SManga.create().apply {
-                url = item.slug
-                title = item.title
-                thumbnail_url = item.thumbnail
+                setUrlWithoutDomain(element.attr("href"))
+                title = element.attr("title").ifBlank { element.text() }
             }
         }
-        return MangasPage(mangas, data.page < data.totalPages)
+
+        // Check for next page button
+        val hasNextPage = document.select("li.page-item a[rel=next]").isNotEmpty() ||
+            document.select("nav[aria-label=Pagination]").isNotEmpty()
+
+        return MangasPage(mangas, hasNextPage)
+    }
+
+    private fun parseMangaFromElement(element: Element): SManga = SManga.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.attr("title").ifBlank { element.text() }
+        thumbnail_url = element.selectFirst("img")?.absUrl("src")
     }
 
     private fun formatChapterNumber(number: String): String = number.toFloatOrNull()?.let {
@@ -211,5 +263,9 @@ class Roseveil : HttpSource() {
         StatusFilter(),
         TypeFilter(),
         GenreFilter(),
+        ColorFilter(),
+        ReadingFormatFilter(),
+        AuthorFilter(),
+        ArtistFilter(),
     )
 }
