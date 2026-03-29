@@ -29,15 +29,34 @@ class NarasiNinja : HttpSource() {
 
     // ── CSRF ──────────────────────────────────────────────────────────────────
 
+    private var cachedCsrfToken: String? = null
+    private var csrfTokenExpiry: Long = 0
+
     private fun getCsrfToken(): String {
-        val url = baseUrl.toHttpUrl().newBuilder()
-            .addPathSegment("komik")
-            .build()
-        return client.newCall(GET(url.toString(), headers)).execute()
-            .asJsoup()
-            .selectFirst("meta[name=csrf-token]")
-            ?.attr("content")
-            ?: error("CSRF token not found")
+        val now = System.currentTimeMillis()
+        if (cachedCsrfToken != null && now < csrfTokenExpiry) {
+            return cachedCsrfToken!!
+        }
+
+        synchronized(this) {
+            if (cachedCsrfToken != null && now < csrfTokenExpiry) {
+                return cachedCsrfToken!!
+            }
+
+            val url = baseUrl.toHttpUrl().newBuilder()
+                .addPathSegment("komik")
+                .build()
+            val response = client.newCall(GET(url.toString(), headers)).execute()
+            val token = response.use {
+                it.asJsoup()
+                    .selectFirst("meta[name=csrf-token]")
+                    ?.attr("content")
+            } ?: error("CSRF token not found")
+
+            cachedCsrfToken = token
+            csrfTokenExpiry = now + CSRF_TOKEN_VALIDITY_MS
+            return token
+        }
     }
 
     private fun filterHeaders(): Headers = headers.newBuilder()
@@ -140,7 +159,7 @@ class NarasiNinja : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val doc = response.asJsoup()
         return SManga.create().apply {
-            title = doc.selectFirst("h1.entry-title")!!.text()
+            title = doc.selectFirst("h1.entry-title")?.text() ?: "Unknown"
             thumbnail_url = doc.selectFirst(".thumb img")?.attr("abs:src")
             description = doc.selectFirst(".entry-content.entry-content-single p")?.text()
             status = doc.selectFirst(".infotable tr:contains(Status) td:last-child")
@@ -176,18 +195,19 @@ class NarasiNinja : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val doc = response.asJsoup()
         return doc.select("#chapterlist li, .eplister li")
-            .map { li ->
-                SChapter.create().apply {
-                    val a = li.selectFirst("a")!!
-                    setUrlWithoutDomain(a.attr("href"))
-                    name = li.selectFirst(".chapternum")?.text() ?: a.text()
-                    date_upload = li.selectFirst(".chapterdate")?.text()
-                        ?.let { parseDate(it) } ?: 0L
-                    chapter_number = parseChapterNumber(
-                        li.attr("data-num").ifEmpty {
-                            name.substringAfterLast(" ")
-                        },
-                    )
+            .mapNotNull { li ->
+                li.selectFirst("a")?.let { a ->
+                    SChapter.create().apply {
+                        setUrlWithoutDomain(a.attr("href"))
+                        name = li.selectFirst(".chapternum")?.text() ?: a.text()
+                        date_upload = li.selectFirst(".chapterdate")?.text()
+                            ?.let { parseDate(it) } ?: 0L
+                        chapter_number = parseChapterNumber(
+                            li.attr("data-num").ifEmpty {
+                                name.substringAfterLast(" ")
+                            },
+                        )
+                    }
                 }
             }
             .distinctBy { it.chapter_number }
@@ -215,6 +235,10 @@ class NarasiNinja : HttpSource() {
     private val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
 
     private fun parseDate(text: String): Long = dateFormat.tryParse(text)
+
+    companion object {
+        private const val CSRF_TOKEN_VALIDITY_MS = 3_600_000 // 1 hour
+    }
 
     // ── FILTERS ───────────────────────────────────────────────────────────────
 

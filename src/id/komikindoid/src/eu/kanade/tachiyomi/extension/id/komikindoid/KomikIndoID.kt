@@ -42,9 +42,9 @@ class KomikIndoID : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("div.limit img").attr("src")
-        manga.title = element.select("div.tt h4").text()
-        element.select("div.animposx > a").first()!!.let {
+        manga.thumbnail_url = element.select("div.limit img").firstOrNull()?.attr("src")
+        manga.title = element.select("div.tt h4").firstOrNull()?.text().orEmpty()
+        element.select("div.animposx > a").firstOrNull()?.let {
             manga.setUrlWithoutDomain(it.attr("href"))
         }
         return manga
@@ -129,28 +129,29 @@ class KomikIndoID : ParsedHttpSource() {
         return GET(url.build(), headers)
     }
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.infoanime").first()!!
-        val descElement = document.select("div.desc > .entry-content.entry-content-single").first()!!
+        val infoElement = document.select("div.infoanime").firstOrNull()
+            ?: return SManga.create()
+        val descElement = document.select("div.desc > .entry-content.entry-content-single").firstOrNull()
+            ?: return SManga.create()
+
         val manga = SManga.create()
-        // need authorCleaner to take "pengarang:" string to remove it from author
-        val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").text()
-        manga.author = document.select(".infox .spe span:contains(Pengarang)").text().substringAfter(authorCleaner)
-        val artistCleaner = document.select(".infox .spe b:contains(Ilustrator)").text()
-        manga.artist = document.select(".infox .spe span:contains(Ilustrator)").text().substringAfter(artistCleaner)
+        val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").firstOrNull()?.text().orEmpty()
+        manga.author = document.select(".infox .spe span:contains(Pengarang)").firstOrNull()?.text().orEmpty().substringAfter(authorCleaner).takeIf { it.isNotEmpty() }
+        val artistCleaner = document.select(".infox .spe b:contains(Ilustrator)").firstOrNull()?.text().orEmpty()
+        manga.artist = document.select(".infox .spe span:contains(Ilustrator)").firstOrNull()?.text().orEmpty().substringAfter(artistCleaner).takeIf { it.isNotEmpty() }
         val genres = mutableListOf<String>()
         infoElement.select(".infox .genre-info a, .infox .spe span:contains(Grafis:) a, .infox .spe span:contains(Tema:) a, .infox .spe span:contains(Konten:) a, .infox .spe span:contains(Jenis Komik:) a").forEach { element ->
             val genre = element.text()
             genres.add(genre)
         }
         manga.genre = genres.joinToString(", ")
-        manga.status = parseStatus(infoElement.select(".infox > .spe > span:nth-child(2)").text())
-        manga.description = descElement.select("p").text().substringAfter("bercerita tentang ")
-        // Add alternative name to manga description
+        manga.status = parseStatus(infoElement.select(".infox > .spe > span:nth-child(2)").firstOrNull()?.text().orEmpty())
+        manga.description = descElement.select("p").firstOrNull()?.text().orEmpty().substringAfter("bercerita tentang ")
         val altName = document.selectFirst(".infox > .spe > span:nth-child(1)")?.text().takeIf { it.isNullOrBlank().not() }
         altName?.let {
             manga.description = manga.description + "\n\n$altName"
         }
-        manga.thumbnail_url = document.select(".thumb > img:nth-child(1)").attr("src").substringBeforeLast("?")
+        manga.thumbnail_url = document.select(".thumb > img:nth-child(1)").firstOrNull()?.attr("src")?.substringBeforeLast("?")
         return manga
     }
 
@@ -163,11 +164,12 @@ class KomikIndoID : ParsedHttpSource() {
     override fun chapterListSelector() = "#chapter_list li"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select(".lchx a").first()!!
+        val urlElement = element.select(".lchx a").firstOrNull()
+            ?: return SChapter.create()
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = urlElement.text()
-        chapter.date_upload = element.select(".dt a").first()?.text()?.let { parseChapterDate(it) } ?: 0
+        chapter.date_upload = element.select(".dt a").firstOrNull()?.text()?.let { parseChapterDate(it) } ?: 0
         return chapter
     }
 

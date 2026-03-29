@@ -93,8 +93,8 @@ class Komiku : HttpSource() {
 
     private fun parseStatus(status: String?) = when {
         status == null -> SManga.UNKNOWN
-        status.contains("Ongoing", true) || status.contains("On Going", true) -> SManga.ONGOING
-        status.contains("End", true) || status.contains("Completed", true) -> SManga.COMPLETED
+        status.contains("Ongoing", ignoreCase = true) || status.contains("On Going", ignoreCase = true) -> SManga.ONGOING
+        status.contains("End", ignoreCase = true) || status.contains("Completed", ignoreCase = true) -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
@@ -103,17 +103,18 @@ class Komiku : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        return document.select("#Daftar_Chapter tr:has(td.judulseries)").map { element ->
-            SChapter.create().apply {
-                val a = element.selectFirst("a")!!
-                setUrlWithoutDomain(a.absUrl("href"))
-                name = a.text()
+        return document.select("#Daftar_Chapter tr:has(td.judulseries)").mapNotNull { element ->
+            element.selectFirst("a")?.let { a ->
+                SChapter.create().apply {
+                    setUrlWithoutDomain(a.absUrl("href"))
+                    name = a.text()
 
-                val timeStamp = element.selectFirst("td.tanggalseries")?.text().orEmpty()
-                date_upload = if (timeStamp.contains("lalu")) {
-                    parseRelativeDate(timeStamp)
-                } else {
-                    dateFormat.tryParse(timeStamp)
+                    val timeStamp = element.selectFirst("td.tanggalseries")?.text().orEmpty()
+                    date_upload = if (timeStamp.contains("lalu")) {
+                        parseRelativeDate(timeStamp)
+                    } else {
+                        dateFormat.tryParse(timeStamp)
+                    }
                 }
             }
         }
@@ -158,11 +159,18 @@ class Komiku : HttpSource() {
     // ============================= Utilities ==============================
     private fun mangaListParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val mangas = document.select("div.bge").map { element ->
-            SManga.create().apply {
-                title = element.selectFirst("h3")!!.text()
-                setUrlWithoutDomain(element.selectFirst("a:has(h3)")!!.absUrl("href"))
-                thumbnail_url = element.selectFirst("img")?.absUrl("src")?.removeQuery()
+        val mangas = document.select("div.bge").mapNotNull { element ->
+            val titleElement = element.selectFirst("h3")
+            val urlElement = element.selectFirst("a:has(h3)")
+
+            if (titleElement != null && urlElement != null) {
+                SManga.create().apply {
+                    title = titleElement.text()
+                    setUrlWithoutDomain(urlElement.absUrl("href"))
+                    thumbnail_url = element.selectFirst("img")?.absUrl("src")?.removeQuery()
+                }
+            } else {
+                null
             }
         }
         val hasNextPage = document.selectFirst("span[hx-get]") != null || mangas.size >= 10

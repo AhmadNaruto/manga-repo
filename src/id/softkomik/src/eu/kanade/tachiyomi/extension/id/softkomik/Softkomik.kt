@@ -1,6 +1,11 @@
 package eu.kanade.tachiyomi.extension.id.softkomik
 
+import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -9,6 +14,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.extractNextJs
+import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parseAs
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -16,11 +22,15 @@ import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 
-class Softkomik : HttpSource() {
+class Softkomik :
+    HttpSource(),
+    ConfigurableSource {
     override val name = "Softkomik"
     override val baseUrl = "https://softkomik.co"
     override val lang = "id"
     override val supportsLatest = true
+
+    private val preferences: SharedPreferences by getPreferencesLazy()
 
     private var session: SessionDto? = null
 
@@ -36,6 +46,20 @@ class Softkomik : HttpSource() {
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Referer", "$baseUrl/")
         .add("Origin", baseUrl)
+
+    // ======================== Configuration ========================
+
+    private val apiUrl: String
+        get() = preferences.getString(PREF_API_URL_KEY, PREF_API_URL_DEFAULT)!!
+
+    private val coverUrl: String
+        get() = preferences.getString(PREF_COVER_URL_KEY, PREF_COVER_URL_DEFAULT)!!
+
+    private val cdnUrls: List<String>
+        get() = preferences.getString(PREF_CDN_URLS_KEY, PREF_CDN_URLS_DEFAULT)!!
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
 
     // ======================== Popular ========================
     override fun popularMangaRequest(page: Int): Request {
@@ -116,7 +140,9 @@ class Softkomik : HttpSource() {
         val manga = response.extractNextJs<MangaDetailsDto>()
             ?: throw Exception("Could not find manga details")
 
-        val slug = response.request.url.pathSegments.lastOrNull()!!
+        val slug = response.request.url.pathSegments.lastOrNull()
+            ?: throw Exception("Could not parse manga slug")
+
         return SManga.create().apply {
             setUrlWithoutDomain(slug)
             title = manga.title
@@ -142,7 +168,9 @@ class Softkomik : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val dto = response.parseAs<ChapterListDto>()
-        val slug = response.request.url.pathSegments[1]
+        val slug = response.request.url.pathSegments.getOrNull(1)
+            ?: return emptyList()
+
         return dto.chapter.map { chapter ->
             val chapterNumStr = chapter.chapter
             val chapterNum = chapterNumStr.substringBefore(".").toFloatOrNull() ?: -1f
@@ -178,8 +206,10 @@ class Softkomik : HttpSource() {
             ?: throw Exception("Could not find chapter data")
 
         val imageSrc = if (data.imageSrc.isEmpty()) {
-            val slug = response.request.url.pathSegments[0]
-            val chapter = response.request.url.pathSegments[2]
+            val slug = response.request.url.pathSegments.getOrNull(0)
+                ?: throw Exception("Could not parse manga slug")
+            val chapter = response.request.url.pathSegments.getOrNull(2)
+                ?: throw Exception("Could not parse chapter slug")
             val url = "$apiUrl/komik/$slug/chapter/$chapter/img/${data._id}"
             client.newCall(GET(url, headers)).execute().use {
                 it.parseAs<ChapterPageImagesDto>().imageSrc
@@ -192,7 +222,11 @@ class Softkomik : HttpSource() {
             throw Exception("No pages found")
         }
 
-        val imageBaseUrl = if (data.storageInter2 == true) cdnUrls[2] else cdnUrls[0]
+        val imageBaseUrl = if (data.storageInter2 == true) {
+            cdnUrls.getOrNull(2) ?: cdnUrls.firstOrNull()
+        } else {
+            cdnUrls.firstOrNull()
+        } ?: throw Exception("No CDN URLs configured")
 
         return imageSrc.mapIndexed { i, img ->
             Page(i, imageUrl = "$imageBaseUrl/${img.removePrefix("/")}")
@@ -225,7 +259,7 @@ class Softkomik : HttpSource() {
         response?.close()
 
         val currentHost = cdnUrls.firstOrNull { request.url.toString().startsWith(it) }
-            ?: return throw java.net.UnknownHostException("Unknown CDN host: ${request.url.host}")
+            ?: return throw java.net.UnknownHostException("Unknown CDN host: ${request.url.host}. Please check CDN URLs in settings.")
 
         val imagePath = request.url.toString().removePrefix(currentHost).removePrefix("/")
         val otherHosts = cdnUrls.filter { it != currentHost }
@@ -313,14 +347,79 @@ class Softkomik : HttpSource() {
         MinChapterFilter(),
     )
 
-    private val apiUrl = "https://v2.softdevices.my.id"
-    private val coverUrl = "https://cover.softdevices.my.id/softkomik-cover"
-    private val cdnUrls = listOf(
-        "https://psy1.komik.im",
-        "https://image.komik.im/softkomik",
-        "https://cd1.softkomik.online/softkomik",
-        "https://f1.softkomik.com/file/softkomik-image",
-        "https://img.softdevices.my.id/softkomik-image",
-        "https://image.softkomik.com/softkomik",
-    )
+    // ======================== Preferences ========================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        EditTextPreference(screen.context).apply {
+            key = PREF_API_URL_KEY
+            title = PREF_API_URL_TITLE
+            summary = PREF_API_URL_SUMMARY
+            dialogTitle = PREF_API_URL_TITLE
+            dialogMessage = "Default: $PREF_API_URL_DEFAULT"
+            setDefaultValue(PREF_API_URL_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                val value = (newValue as String).trim()
+                if (value.isEmpty()) {
+                    Toast.makeText(screen.context, "API URL cannot be empty", Toast.LENGTH_LONG).show()
+                    return@setOnPreferenceChangeListener false
+                }
+                Toast.makeText(screen.context, "Restart app to apply changes", Toast.LENGTH_LONG).show()
+                true
+            }
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_COVER_URL_KEY
+            title = PREF_COVER_URL_TITLE
+            summary = PREF_COVER_URL_SUMMARY
+            dialogTitle = PREF_COVER_URL_TITLE
+            dialogMessage = "Default: $PREF_COVER_URL_DEFAULT"
+            setDefaultValue(PREF_COVER_URL_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                val value = (newValue as String).trim()
+                if (value.isEmpty()) {
+                    Toast.makeText(screen.context, "Cover URL cannot be empty", Toast.LENGTH_LONG).show()
+                    return@setOnPreferenceChangeListener false
+                }
+                Toast.makeText(screen.context, "Restart app to apply changes", Toast.LENGTH_LONG).show()
+                true
+            }
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_CDN_URLS_KEY
+            title = PREF_CDN_URLS_TITLE
+            summary = PREF_CDN_URLS_SUMMARY
+            dialogTitle = PREF_CDN_URLS_TITLE
+            dialogMessage = "Default: $PREF_CDN_URLS_DEFAULT\n\nSeparate multiple URLs with commas"
+            setDefaultValue(PREF_CDN_URLS_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                val value = (newValue as String).trim()
+                if (value.isEmpty()) {
+                    Toast.makeText(screen.context, "CDN URLs cannot be empty", Toast.LENGTH_LONG).show()
+                    return@setOnPreferenceChangeListener false
+                }
+                Toast.makeText(screen.context, "Restart app to apply changes", Toast.LENGTH_LONG).show()
+                true
+            }
+        }.also(screen::addPreference)
+    }
+
+    companion object {
+        private const val PREF_API_URL_KEY = "api_url"
+        private const val PREF_API_URL_TITLE = "API URL"
+        private const val PREF_API_URL_SUMMARY = "URL for Softkomik API endpoint"
+        private const val PREF_API_URL_DEFAULT = "https://v2.softdevices.my.id"
+
+        private const val PREF_COVER_URL_KEY = "cover_url"
+        private const val PREF_COVER_URL_TITLE = "Cover Image URL"
+        private const val PREF_COVER_URL_SUMMARY = "URL for Softkomik cover image CDN"
+        private const val PREF_COVER_URL_DEFAULT = "https://cover.softdevices.my.id/softkomik-cover"
+
+        private const val PREF_CDN_URLS_KEY = "cdn_urls"
+        private const val PREF_CDN_URLS_TITLE = "CDN URLs"
+        private const val PREF_CDN_URLS_SUMMARY = "Comma-separated list of CDN URLs for images"
+        private const val PREF_CDN_URLS_DEFAULT =
+            "https://psy1.komik.im, https://image.komik.im/softkomik, https://cd1.softkomik.online/softkomik, https://f1.softkomik.com/file/softkomik-image, https://img.softdevices.my.id/softkomik-image, https://image.softkomik.com/softkomik"
+    }
 }

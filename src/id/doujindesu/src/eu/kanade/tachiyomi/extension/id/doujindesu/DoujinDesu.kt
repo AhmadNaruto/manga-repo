@@ -403,173 +403,154 @@ class DoujinDesu :
 
     // Detail Parse
 
-    private val chapterListRegex = Regex("""\d+[-–]?\d*\..+<br>""", RegexOption.IGNORE_CASE)
-    private val htmlTagRegex = Regex("<[^>]*>")
-    private val chapterPrefixRegex = Regex("""^\d+(-\d+)?\.\s*.*""")
-
     override fun getMangaUrl(manga: SManga) = "$baseUrl${manga.url}"
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.selectFirst("section.metadata")!!
-        val authorName = if (infoElement.select("td:contains(Author) ~ td").isEmpty()) {
-            null
-        } else {
-            infoElement.select("td:contains(Author) ~ td").joinToString { it.text() }
+        val infoElement = document.selectFirst("section.metadata")
+            ?: throw Exception("Could not find manga info")
+
+        val metadata = MetadataParser(infoElement)
+
+        val manga = SManga.create().apply {
+            author = metadata.author
+            genre = infoElement.select("div.tags > a").joinToString { it.text() }
+            status = parseStatus(infoElement.selectFirst("td:contains(Status) ~ td")?.text().orEmpty())
+            thumbnail_url = document.selectFirst("figure.thumbnail img")?.attr("src")
+
+            description = buildDescription(metadata)
         }
-        val groupName = if (infoElement.select("td:contains(Group) ~ td").isEmpty()) {
-            "Tidak Diketahui"
-        } else {
-            infoElement.select("td:contains(Group) ~ td").joinToString { it.text() }
-        }
-        val authorParser = if (authorName.isNullOrEmpty()) {
-            groupName?.takeIf { !it.isNullOrEmpty() && it != "Tidak Diketahui" }
-        } else {
-            authorName
-        }
-        val characterName = if (infoElement.select("td:contains(Character) ~ td").isEmpty()) {
-            "Tidak Diketahui"
-        } else {
-            infoElement.select("td:contains(Character) ~ td").joinToString { it.text() }
-        }
-        val seriesParser = if (infoElement.select("td:contains(Series) ~ td").text() == "Manhwa") {
-            infoElement.select("td:contains(Serialization) ~ td").text()
-        } else {
-            infoElement.select("td:contains(Series) ~ td").text()
-        }
-        val alternativeTitle = if (infoElement.select("h1.title > span.alter").isEmpty()) {
-            "Tidak Diketahui"
-        } else {
-            infoElement.select("h1.title > span.alter").joinToString { it.text() }
-        }
-        val manga = SManga.create()
-        manga.description = if (infoElement.select("div.pb-2 > p:nth-child(1)").isEmpty()) {
-            """
-            Tidak ada deskripsi yang tersedia bosque
-
-            Judul Alternatif : $alternativeTitle
-            Grup             : $groupName
-            Karakter         : $characterName
-            Seri             : $seriesParser
-            """.trimIndent()
-        } else {
-            val pb2Element = infoElement.selectFirst("div.pb-2")
-
-            val showDescription = pb2Element?.let { element ->
-                val paragraphs = element.select("p")
-                val firstText = paragraphs.firstOrNull()?.text()?.trim()?.lowercase()
-
-                // Fungsi untuk mendekode semua entitas HTML
-                val decodeHtmlEntities = { text: String ->
-                    Jsoup.parse(text).text().replace('\u00A0', ' ')
-                }
-
-                // CASE 1: Gabungan chapter dalam satu paragraf (Manga Style)
-                val mergedChapterElement = element.select("p:has(strong:matchesOwn(^\\s*Sinopsis\\s*:))").firstOrNull {
-                    chapterListRegex.containsMatchIn(it.html())
-                }
-                if (mergedChapterElement != null) {
-                    val chapterList = mergedChapterElement.html()
-                        .split("<br>")
-                        .drop(1)
-                        .map { decodeHtmlEntities(it.replace(htmlTagRegex, "").trim()) }
-                        .filter { it.isNotEmpty() }
-
-                    return@let "Daftar Chapter:\n" + chapterList.joinToString(" | ")
-                }
-
-                // CASE 2: Dua paragraf: p[0] = "Sinopsis:", p[1] = daftar chapter (Manga Style)
-                if (
-                    firstText == "sinopsis:" &&
-                    paragraphs.size > 1 &&
-                    chapterListRegex.containsMatchIn(paragraphs[1].html())
-                ) {
-                    val chapterList = paragraphs[1].html()
-                        .split("<br>")
-                        .map { decodeHtmlEntities(it.replace(htmlTagRegex, "").trim()) }
-                        .filter { it.isNotEmpty() }
-
-                    return@let "Daftar Chapter:\n" + chapterList.joinToString(" | ")
-                }
-
-                // CASE 3 + 5 Hybrid: Tangani Sinopsis dengan <strong> + <br> + <p> campuran (Manhwa Style + Terkompresi)
-                val sinopsisPara = element.select("p:has(strong:matchesOwn(^\\s*Sinopsis\\s*:))")
-                if (sinopsisPara.isNotEmpty()) {
-                    val sinopsisStart = sinopsisPara.first()!!
-                    val htmlSplit = sinopsisStart.html().split("<br>")
-
-                    val startText = htmlSplit
-                        .drop(1)
-                        .map { decodeHtmlEntities(it.replace(htmlTagRegex, "").trim()) }
-                        .filter { it.isNotEmpty() && !it.lowercase().startsWith("download") && !it.lowercase().startsWith("volume") && !it.lowercase().startsWith("chapter") }
-
-                    val sinopsisTexts = buildList {
-                        addAll(startText)
-
-                        val allP = element.select("p")
-                        val startIndex = allP.indexOf(sinopsisStart)
-
-                        for (i in startIndex + 1 until allP.size) {
-                            val htmlSplitNext = allP[i].html().split("<br>")
-                            val contents = htmlSplitNext
-                                .map { decodeHtmlEntities(it.replace(htmlTagRegex, "").trim()) }
-                                .filter { it.isNotEmpty() && !it.lowercase().startsWith("download") && !it.lowercase().startsWith("volume") && !it.lowercase().startsWith("chapter") }
-                            addAll(contents)
-                        }
-                    }
-                    if (sinopsisTexts.isNotEmpty()) {
-                        val isChapterList = sinopsisTexts.first().matches(chapterPrefixRegex)
-                        val prefix = if (isChapterList) "Daftar Chapter:" else "Sinopsis:"
-                        return@let "$prefix\n" + sinopsisTexts.joinToString("\n\n")
-                    }
-                }
-
-                // CASE 4: Satu paragraf saja dengan <strong> dan <br> (Manhwa Style)
-                if (
-                    paragraphs.size == 1 &&
-                    element.select("p:has(strong:matchesOwn(^\\s*Sinopsis\\s*:))").isNotEmpty()
-                ) {
-                    val para = paragraphs[0]
-                    val htmlSplit = para.html().split("<br>")
-
-                    val content = htmlSplit.getOrNull(1)?.let {
-                        decodeHtmlEntities(it.replace(htmlTagRegex, "").trim())
-                    }.orEmpty()
-
-                    if (content.isNotBlank()) {
-                        return@let "Sinopsis:\n$content"
-                    }
-                }
-
-                // CASE 6: Fallback
-                if (firstText == "sinopsis:") {
-                    val sinopsisLines = paragraphs.drop(1)
-                        .map { decodeHtmlEntities(it.text().trim()) }
-                        .filter { it.isNotEmpty() && !it.lowercase().startsWith("download") && !it.lowercase().startsWith("volume") && !it.lowercase().startsWith("chapter") }
-
-                    return@let "Sinopsis:\n" + sinopsisLines.joinToString("\n\n")
-                }
-                return@let ""
-            } ?: ""
-            """
-            |$showDescription
-            |
-            |Judul Alternatif : $alternativeTitle
-            |Seri             : $seriesParser
-            """.trimMargin().replace(Regex(" +"), " ")
-        }
-        val genres = mutableListOf<String>()
-        infoElement.select("div.tags > a").forEach { element ->
-            val genre = element.text()
-            genres.add(genre)
-        }
-        manga.author = authorParser
-        manga.genre = infoElement.select("div.tags > a").joinToString { it.text() }
-        manga.status = parseStatus(
-            infoElement.selectFirst("td:contains(Status) ~ td")!!.text(),
-        )
-        manga.thumbnail_url = document.selectFirst("figure.thumbnail img")?.attr("src")
 
         return manga
+    }
+
+    private fun buildDescription(metadata: MetadataParser): String {
+        val pb2Element = metadata.infoElement.selectFirst("div.pb-2")
+            ?: return buildFallbackDescription(metadata)
+
+        val descriptionText = parseDescriptionContent(pb2Element)
+
+        return buildString {
+            if (descriptionText.isNotEmpty()) {
+                append(descriptionText)
+                append("\n\n")
+            }
+            append("Judul Alternatif: ${metadata.alternativeTitle}\n")
+            append("Seri: ${metadata.series}")
+        }.trim()
+    }
+
+    private fun parseDescriptionContent(element: Element): String {
+        val paragraphs = element.select("p")
+        if (paragraphs.isEmpty()) return ""
+
+        val decodeHtml = { text: String ->
+            Jsoup.parse(text).text().replace('\u00A0', ' ')
+        }
+
+        // Check for chapter list pattern
+        val sinopsisPara = element.select("p:has(strong:matchesOwn(^\\s*Sinopsis\\s*:))")
+        if (sinopsisPara.isNotEmpty()) {
+            return parseSinopsisContent(sinopsisPara.first()!!, paragraphs, decodeHtml)
+        }
+
+        // Fallback: simple paragraph extraction
+        if (paragraphs.firstOrNull()?.text()?.trim()?.lowercase() == "sinopsis:") {
+            return paragraphs.drop(1)
+                .map { decodeHtml(it.text().trim()) }
+                .filter { it.isNotEmpty() && !isSkipText(it) }
+                .joinToString("\n\n")
+                .takeIf { it.isNotEmpty() }
+                ?.let { "Sinopsis:\n$it" }
+                .orEmpty()
+        }
+
+        return ""
+    }
+
+    private fun parseSinopsisContent(sinopsisPara: Element, allParagraphs: List<Element>, decodeHtml: (String) -> String): String {
+        val htmlSplit = sinopsisPara.html().split("<br>")
+        val startText = htmlSplit.drop(1)
+            .map { decodeHtml(it.replace(HTML_TAG_REGEX, "").trim()) }
+            .filter { it.isNotEmpty() && !isSkipText(it) }
+
+        val allText = buildList {
+            addAll(startText)
+
+            val startIndex = allParagraphs.indexOf(sinopsisPara)
+            for (i in startIndex + 1 until allParagraphs.size) {
+                val contents = allParagraphs[i].html().split("<br>")
+                    .map { decodeHtml(it.replace(HTML_TAG_REGEX, "").trim()) }
+                    .filter { it.isNotEmpty() && !isSkipText(it) }
+                addAll(contents)
+            }
+        }
+
+        if (allText.isEmpty()) return ""
+
+        val isChapterList = allText.first().matches(CHAPTER_PREFIX_REGEX)
+        val prefix = if (isChapterList) "Daftar Chapter:" else "Sinopsis:"
+        return "$prefix\n${allText.joinToString("\n\n")}"
+    }
+
+    private fun isSkipText(text: String): Boolean {
+        val lower = text.lowercase()
+        return lower.startsWith("download") || lower.startsWith("volume") || lower.startsWith("chapter")
+    }
+
+    private fun buildFallbackDescription(metadata: MetadataParser): String = buildString {
+        appendLine("Tidak ada deskripsi yang tersedia")
+        appendLine()
+        appendLine("Judul Alternatif: ${metadata.alternativeTitle}")
+        appendLine("Grup: ${metadata.group}")
+        appendLine("Karakter: ${metadata.character}")
+        append("Seri: ${metadata.series}")
+    }
+
+    private class MetadataParser(val infoElement: Element) {
+        val authorName: String? = infoElement.select("td:contains(Author) ~ td")
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString { it.text() }
+            ?.takeIf { it.isNotEmpty() }
+
+        val group: String = infoElement.select("td:contains(Group) ~ td")
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString { it.text() }
+            ?.takeIf { it.isNotEmpty() && it != "Tidak Diketahui" }
+            ?: "Tidak Diketahui"
+
+        val author: String? = authorName ?: group.takeIf { it != "Tidak Diketahui" }
+
+        val character: String = infoElement.select("td:contains(Character) ~ td")
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString { it.text() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: "Tidak Diketahui"
+
+        val series: String = run {
+            val seriesText = infoElement.select("td:contains(Series) ~ td").text()
+            if (seriesText == "Manhwa") {
+                infoElement.select("td:contains(Serialization) ~ td").text()
+            } else {
+                seriesText
+            }
+        }
+
+        val alternativeTitle: String = infoElement.select("h1.title > span.alter")
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString { it.text() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: "Tidak Diketahui"
+    }
+
+    companion object {
+        private val CHAPTER_LIST_REGEX = Regex("""\d+[-–]?\d*\..+<br>""", RegexOption.IGNORE_CASE)
+        private val HTML_TAG_REGEX = Regex("<[^>]*>")
+        private val CHAPTER_PREFIX_REGEX = Regex("""^\d+(-\d+)?\.\s*.*""")
+
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private const val PREF_DOMAIN_TITLE = "Mengganti BaseUrl"
+        private const val PREF_DOMAIN_DEFAULT = "https://doujindesu.tv"
+        private const val PREF_DOMAIN_SUMMARY = "Mengganti domain default dengan domain yang berbeda"
     }
 
     // Chapter Stuff
@@ -613,13 +594,6 @@ class DoujinDesu :
             .asJsoup().select("img").mapIndexed { i, element ->
                 Page(i, "", element.attr("src"))
             }
-    }
-
-    companion object {
-        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
-        private const val PREF_DOMAIN_TITLE = "Mengganti BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://doujindesu.tv"
-        private const val PREF_DOMAIN_SUMMARY = "Mengganti domain default dengan domain yang berbeda"
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

@@ -21,9 +21,11 @@ class Mangalay : ParsedHttpSource() {
     override fun popularMangaSelector() = ".post-body table"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        setUrlWithoutDomain(element.select("a").first()!!.attr("href"))
-        title = element.select(".tr-caption").text()
-        thumbnail_url = element.select("img").attr("src")
+        element.select("a").firstOrNull()?.let {
+            setUrlWithoutDomain(it.attr("href"))
+        }
+        title = element.select(".tr-caption").firstOrNull()?.text().orEmpty()
+        thumbnail_url = element.select("img").firstOrNull()?.attr("src")
     }
 
     override fun popularMangaNextPageSelector(): String? = null
