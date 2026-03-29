@@ -6,9 +6,11 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
 
-val jsonInstance: Json by injectLazy()
+val jsonInstance = Json {
+    ignoreUnknownKeys = true
+    coerceInputValues = true
+}
 
 /**
  * Parses JSON string into an object of type [T].
