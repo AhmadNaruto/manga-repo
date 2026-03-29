@@ -13,7 +13,7 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
+
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -31,7 +31,7 @@ abstract class PizzaReader(
 
     open val apiUrl by lazy { "$baseUrl$apiPath" }
 
-    protected open val json: Json by injectLazy()
+    protected open val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     override fun headersBuilder() = Headers.Builder().apply {
         add("Referer", baseUrl)

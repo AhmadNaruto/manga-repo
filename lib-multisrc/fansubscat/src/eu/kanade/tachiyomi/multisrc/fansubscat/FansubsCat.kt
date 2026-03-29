@@ -24,7 +24,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
+
 
 abstract class FansubsCat(
     override val name: String,
@@ -41,7 +41,7 @@ abstract class FansubsCat(
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val json: Json by injectLazy()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private fun parseMangaFromJson(response: Response): MangasPage {
         val jsonObject = json.decodeFromString<JsonObject>(response.body.string())

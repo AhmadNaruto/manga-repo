@@ -33,7 +33,7 @@ abstract class GravureBlogger(
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
 
-    private val json: Json by injectLazy()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private val dateFormat by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

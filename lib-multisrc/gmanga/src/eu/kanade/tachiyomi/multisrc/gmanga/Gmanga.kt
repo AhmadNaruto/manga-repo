@@ -22,7 +22,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
+
 
 abstract class Gmanga(
     override val name: String,
@@ -33,7 +33,7 @@ abstract class Gmanga(
 
     override val supportsLatest = true
 
-    protected val json: Json by injectLazy()
+    protected val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     override val client = network.cloudflareClient
 

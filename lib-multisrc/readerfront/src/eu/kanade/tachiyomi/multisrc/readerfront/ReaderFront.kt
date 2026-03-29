@@ -19,7 +19,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import okhttp3.Request
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
+
 
 abstract class ReaderFront(
     final override val name: String,
@@ -28,7 +28,7 @@ abstract class ReaderFront(
 ) : HttpSource() {
     override val supportsLatest = true
 
-    private val json by injectLazy<Json>()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private val i18n = ReaderFrontI18N(lang)
 

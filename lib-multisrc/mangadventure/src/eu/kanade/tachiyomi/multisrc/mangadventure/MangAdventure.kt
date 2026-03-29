@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
+
 
 /** MangAdventure base source. */
 abstract class MangAdventure(
@@ -43,7 +43,7 @@ abstract class MangAdventure(
     private val apiUrl by lazy { "$baseUrl/api/v2" }
 
     /** The JSON parser of the class. */
-    private val json by injectLazy<Json>()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     override val versionId = 3
 

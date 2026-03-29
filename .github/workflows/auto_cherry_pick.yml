@@ -34,7 +34,7 @@ jobs:
           fetch-depth: 100
           token: ${{ secrets.BOT_PAT }}
 
-      - name: Cherry-picking
+      - name: Sync keiyoushi with upstream
         run: |
           cd master
 
@@ -43,50 +43,36 @@ jobs:
 
           git fetch origin keiyoushi
           git checkout keiyoushi
-          echo "Last commit: `git log -1 --oneline`"
+          echo "Last commit: $(git log -1 --oneline)"
           git remote add keiyoushi-upstream https://github.com/keiyoushi/extensions-source
           git fetch keiyoushi-upstream
-          echo "Last commit: `git log -1 --oneline keiyoushi-upstream/main`"
+          echo "Upstream commit: $(git log -1 --oneline keiyoushi-upstream/main)"
 
           echo "Incoming commits:"
-          echo "`git log keiyoushi..keiyoushi-upstream/main --oneline`"
-          upcoming_changes=`git log keiyoushi..keiyoushi-upstream/main --pretty="%h"`
-
-          # Read the upcoming changes' hash into an array
-          upcoming_changes_hash=()
-          while read -r line; do
-            upcoming_changes_hash+=("$line")
-          done <<< "$upcoming_changes"
-
-          git checkout master
-          echo "Last commit: `git log -1 --oneline`"
-          # Loop through indices in reverse order
-          for (( i=${#upcoming_changes_hash[@]}; i>=0; i-- )); do
-            if [ ! -z "${upcoming_changes_hash[i]}" -a "${upcoming_changes_hash[i]}" != " " ]; then
-              echo "[$i]: Cherry picking '${upcoming_changes_hash[i]}'"
-              git cherry-pick --allow-empty --keep-redundant-commits "${upcoming_changes_hash[i]}"
-              latest_hash=${upcoming_changes_hash[i]}
-            else
-              echo "[$i]: skip '${upcoming_changes_hash[i]}'"
-            fi
-          done
-
-          echo "Last commit: `git log -1 --oneline`"
-
-          echo "LATEST_HASH=${latest_hash}" >> $GITHUB_ENV
-
-      - name: Merging keiyoushi-upstream to keiyoushi
-        run: |
-          cd master
-          git checkout keiyoushi
-          echo "Last commit: `git log -1 --oneline`"
-          latest_commit_hash=${{ env.LATEST_HASH }}
-          if [ ! -z "$latest_commit_hash" -a "$latest_commit_hash" != " " ]; then
-            echo "Merging commit '$latest_commit_hash' from 'keiyoushi-upstream' into keiyoushi"
-            git merge "$latest_commit_hash" --no-ff -m "Merge branch 'keiyoushi-upstream' into keiyoushi"
+          echo "$(git log keiyoushi..keiyoushi-upstream/main --oneline)"
+          
+          # Check if there are new commits
+          if [ -z "$(git log keiyoushi..keiyoushi-upstream/main --oneline)" ]; then
+            echo "No new commits from upstream, skipping sync"
+            exit 0
           fi
 
-          echo "Last commit: `git log -1 --oneline`"
+          # Rebase keiyoushi on top of upstream/main
+          echo "Rebasing keiyoushi onto upstream/main..."
+          git rebase keiyoushi-upstream/main || {
+            echo "Rebase conflict detected, aborting..."
+            git rebase --abort || true
+            exit 1
+          }
+
+          echo "Rebase successful!"
+          echo "Last commit: $(git log -1 --oneline)"
+
+          # Force push keiyoushi
+          echo "Pushing keiyoushi branch..."
+          git push --force-with-lease origin keiyoushi || {
+            echo "Push failed, continuing..."
+          }
 
       # - name: Merging master to merge-keiyoushi
       #   run: |
@@ -109,14 +95,10 @@ jobs:
         run: |
           cd master
           git checkout master
-          echo "Last commit: `git log -1 --oneline`"
+          echo "Last commit: $(git log -1 --oneline)"
           echo "Pushing 'master' to repo"
-          git push
-          git checkout keiyoushi
-          echo "Last commit: `git log -1 --oneline`"
-          echo "Pushing 'keiyoushi' to repo"
-          git push
+          git push --force-with-lease origin master || echo "Push master failed, continuing..."
           # git checkout merge-keiyoushi
-          # echo "Last commit: `git log -1 --oneline`"
+          # echo "Last commit: $(git log -1 --oneline)"
           # echo "Pushing 'merge-keiyoushi' to repo"
           # git push

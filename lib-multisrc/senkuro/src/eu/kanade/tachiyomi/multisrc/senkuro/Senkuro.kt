@@ -479,5 +479,5 @@ abstract class Senkuro(
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
 
-    private val json: Json by injectLazy()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 }

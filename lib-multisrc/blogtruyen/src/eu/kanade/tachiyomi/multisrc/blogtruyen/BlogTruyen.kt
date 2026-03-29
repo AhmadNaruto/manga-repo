@@ -21,7 +21,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.injectLazy
+
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -39,7 +39,7 @@ abstract class BlogTruyen(
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
 
-    private val json: Json by injectLazy()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")

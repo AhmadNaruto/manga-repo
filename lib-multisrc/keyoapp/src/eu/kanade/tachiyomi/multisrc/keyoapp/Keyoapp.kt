@@ -23,7 +23,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.injectLazy
+
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -45,7 +45,7 @@ abstract class Keyoapp(
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
 
-    private val json: Json by injectLazy()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.ENGLISH)
 

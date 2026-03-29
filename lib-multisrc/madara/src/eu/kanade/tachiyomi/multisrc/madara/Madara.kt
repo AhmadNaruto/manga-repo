@@ -26,7 +26,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -52,7 +51,10 @@ abstract class Madara(
             .build()
     }
 
-    protected open val json: Json by injectLazy()
+    protected open val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     protected val intl = Intl(
         language = lang,

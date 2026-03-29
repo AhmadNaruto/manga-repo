@@ -16,7 +16,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
-import uy.kohesive.injekt.injectLazy
+
 
 abstract class ZeistManga(
     override val name: String,
@@ -28,7 +28,7 @@ abstract class ZeistManga(
 
     override val client = network.cloudflareClient
 
-    protected val json: Json by injectLazy()
+    protected val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private val intl by lazy { ZeistMangaIntl(lang) }
 
