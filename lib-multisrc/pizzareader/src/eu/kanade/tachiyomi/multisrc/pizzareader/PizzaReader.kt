@@ -88,7 +88,18 @@ abstract class PizzaReader(
             response.close()
             throw Exception("HTTP error ${response.code}")
         }
-        return mangaDetailsParse(response.asJsoup()).apply { initialized = true }
+        val result = json.decodeFromString<PizzaResultDto>(response.body.string())
+        val comic = result.comic!!
+
+        return SManga.create().apply {
+            title = comic.title
+            author = comic.author
+            artist = comic.artist
+            description = comic.description
+            genre = comic.genres.joinToString(", ") { it.name }
+            status = comic.status?.toStatus() ?: SManga.UNKNOWN
+            thumbnail_url = comic.thumbnail
+        }.apply { initialized = true }
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
