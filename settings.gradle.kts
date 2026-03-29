@@ -25,6 +25,7 @@ fun loadAllIndividualExtensions() {
         }
     }
 }
+
 fun loadIndividualExtension(lang: String, name: String) {
     include("src:${lang}:${name}")
 }

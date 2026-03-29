@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -21,6 +22,8 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
+import rx.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -96,7 +99,7 @@ abstract class BlogTruyen(
         page: Int,
         query: String,
         filters: FilterList,
-    ): Observable<MangasPage> = when {
+    ): rx.Observable<MangasPage> = when {
         query.startsWith(PREFIX_ID_SEARCH) -> {
             var id = query.removePrefix(PREFIX_ID_SEARCH).trimStart()
 
@@ -107,12 +110,15 @@ abstract class BlogTruyen(
                 id = document.selectFirst(".breadcrumbs a:last-child")!!.attr("href").removePrefix("/")
             }
 
-            fetchMangaDetails(
-                SManga.create().apply {
-                    url = "/$id"
-                },
-            )
-                .map { MangasPage(listOf(it), false) }
+            rx.Observable.fromCallable {
+                runBlocking {
+                    getMangaDetails(
+                        SManga.create().apply {
+                            url = "/$id"
+                        },
+                    )
+                }
+            }.map { MangasPage(listOf(it), false) }
         }
 
         else -> super.fetchSearchManga(page, query, filters)
@@ -367,16 +373,16 @@ abstract class BlogTruyen(
                 .build(),
         )
 
-        Single.fromCallable {
-            try {
-                client.newCall(request).execute().close()
-            } catch (e: Exception) {
-                Log.e("BlogTruyen", "Error updating view count", e)
-            }
-        }
+        Observable.just(Unit)
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.io())
-            .subscribe()
+            .subscribe {
+                try {
+                    client.newCall(request).execute().close()
+                } catch (e: Exception) {
+                    Log.e("BlogTruyen", "Error updating view count", e)
+                }
+            }
     }
 
     private val ajaxSearchUrls: Map<String, String> = mapOf(

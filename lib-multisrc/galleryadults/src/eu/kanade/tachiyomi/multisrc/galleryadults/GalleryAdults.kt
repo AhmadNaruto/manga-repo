@@ -149,7 +149,7 @@ abstract class GalleryAdults(
                     response.close()
                     throw Exception("HTTP error ${response.code}")
                 }
-                randomEntryParse(response.asJsoup())
+                randomEntryParse(response)
             }
 
             query.startsWith(PREFIX_ID_SEARCH) -> {
@@ -159,7 +159,7 @@ abstract class GalleryAdults(
                     response.close()
                     throw Exception("HTTP error ${response.code}")
                 }
-                searchMangaByIdParse(response.asJsoup(), id)
+                searchMangaByIdParse(response, id)
             }
 
             query.toIntOrNull() != null -> {
@@ -168,7 +168,7 @@ abstract class GalleryAdults(
                     response.close()
                     throw Exception("HTTP error ${response.code}")
                 }
-                searchMangaByIdParse(response.asJsoup(), query)
+                searchMangaByIdParse(response, query)
             }
 
             else -> {
@@ -177,7 +177,7 @@ abstract class GalleryAdults(
                     response.close()
                     throw Exception("HTTP error ${response.code}")
                 }
-                searchMangaParse(response.asJsoup())
+                searchMangaParse(response)
             }
         }
     }

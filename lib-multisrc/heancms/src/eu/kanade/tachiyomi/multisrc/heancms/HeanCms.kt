@@ -345,7 +345,7 @@ abstract class HeanCms(
 
     protected open fun String.toAbsoluteUrl(): String = if (startsWith("https://") || startsWith("http://")) this else "$cdnUrl/$coverPath$this"
 
-    override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
+    override fun fetchImageUrl(page: Page): rx.Observable<String> = rx.Observable.just(page.imageUrl!!)
 
     override fun imageUrlParse(response: Response): String = ""
 

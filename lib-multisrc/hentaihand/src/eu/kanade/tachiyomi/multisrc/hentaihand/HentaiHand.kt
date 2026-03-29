@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parseAs
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -92,8 +93,8 @@ abstract class HentaiHand(
         }
         // Returns the first matched id, or null if there are no results
         val idList = response.parseAs<ResponseDto<List<IdDto>>>().data.map { it.id }
-        if (idList.isEmpty()) {
-            return null
+        return if (idList.isEmpty()) {
+            null
         } else {
             idList.first().toInt()
         }
@@ -126,7 +127,7 @@ abstract class HentaiHand(
 
                 is LookupFilter -> {
                     filter.state.split(",").map { it.trim() }.filter { it.isNotBlank() }.map {
-                        lookupFilterId(it, filter.uri) ?: throw Exception("No ${filter.singularName} \"$it\" was found")
+                        runBlocking { lookupFilterId(it, filter.uri) } ?: throw Exception("No ${filter.singularName} \"$it\" was found")
                     }.forEachIndexed { index, it ->
                         if (!(filter.uri == "languages" && hhLangId.contains(it))) {
                             url.addQueryParameter(filter.uri + "[$index]", it.toString())
@@ -154,7 +155,7 @@ abstract class HentaiHand(
             response.close()
             throw Exception("HTTP error ${response.code}")
         }
-        return mangaDetailsParse(response.asJsoup()).apply { initialized = true }
+        return mangaDetailsParse(response).apply { initialized = true }
     }
 
     override fun mangaDetailsParse(response: Response): SManga = response.parseAs<MangaDetailsResponseDto>().toSMangaDetails()

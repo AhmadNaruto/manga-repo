@@ -175,7 +175,7 @@ abstract class MadTheme(
                 response.close()
                 throw Exception("HTTP error ${response.code}")
             }
-            chapterListParse(response.asJsoup())
+            chapterListParse(response)
         } else {
             throw Exception("Licensed - No chapters to show")
         }

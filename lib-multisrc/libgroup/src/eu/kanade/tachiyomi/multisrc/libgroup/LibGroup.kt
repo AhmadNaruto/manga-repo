@@ -424,7 +424,7 @@ abstract class LibGroup(
             response.close()
             throw Exception("HTTP error ${response.code}")
         }
-        return searchMangaParse(response.asJsoup())
+        return searchMangaParse(response)
     }
 
     // Search
