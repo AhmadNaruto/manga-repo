@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.uzaymanga
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -18,7 +17,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -80,18 +78,21 @@ abstract class UzayManga(
         setUrlWithoutDomain(mangaLink.absUrl("href"))
     }
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (query.startsWith(URL_SEARCH_PREFIX)) {
             val url = "$baseUrl/manga/${query.substringAfter(URL_SEARCH_PREFIX)}"
-            return client.newCall(GET(url, headers)).asObservableSuccess().map { response ->
-                val document = response.asJsoup()
-                when {
-                    isMangaPage(document) -> MangasPage(listOf(mangaDetailsParse(document)), false)
-                    else -> MangasPage(emptyList(), false)
-                }
+            val response = client.newCall(GET(url, headers)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            val document = response.asJsoup()
+            return when {
+                isMangaPage(document) -> MangasPage(listOf(mangaDetailsParse(document)), false)
+                else -> MangasPage(emptyList(), false)
             }
         }
-        return super.fetchSearchManga(page, query, filters)
+        return super.getSearchManga(page, query, filters)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {

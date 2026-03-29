@@ -12,7 +12,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 abstract class VerComics(
     override val name: String,
@@ -102,13 +101,11 @@ abstract class VerComics(
         }
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.just(
-        listOf(
-            SChapter.create().apply {
-                name = manga.title
-                url = manga.url
-            },
-        ),
+    override suspend fun getChapterList(manga: SManga): List<SChapter> = listOf(
+        SChapter.create().apply {
+            name = manga.title
+            url = manga.url
+        },
     )
 
     override fun chapterListSelector() = throw UnsupportedOperationException()

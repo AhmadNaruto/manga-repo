@@ -17,8 +17,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
-import rx.Observable
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -101,7 +99,7 @@ abstract class GravureBlogger(
 
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> = Observable.just(manga)
+    override suspend fun getMangaDetails(manga: SManga): SManga = manga
 
     override fun getMangaUrl(manga: SManga) = "$baseUrl${manga.url}".substringBefore("#")
 
@@ -109,19 +107,17 @@ abstract class GravureBlogger(
 
     override fun mangaDetailsParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         val date = manga.url.substringAfter("#")
 
-        return Observable.just(
-            listOf(
-                SChapter.create().apply {
-                    url = manga.url.substringBefore("#")
-                    name = "Gallery"
-                    date_upload = runCatching {
-                        dateFormat.parse(date)!!.time
-                    }.getOrDefault(0L)
-                },
-            ),
+        return listOf(
+            SChapter.create().apply {
+                url = manga.url.substringBefore("#")
+                name = "Gallery"
+                date_upload = runCatching {
+                    dateFormat.parse(date)!!.time
+                }.getOrDefault(0L)
+            },
         )
     }
 

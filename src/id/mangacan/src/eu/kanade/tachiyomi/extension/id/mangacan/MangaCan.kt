@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
-import rx.Observable
 
 class MangaCan :
     MangaThemesia(
@@ -35,15 +34,22 @@ class MangaCan :
         .addHeader("Referer", "$baseUrl/")
         .build()
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (query.startsWith(URL_SEARCH_PREFIX).not()) return super.fetchSearchManga(page, query, filters)
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
+        if (query.startsWith(URL_SEARCH_PREFIX).not()) return super.getSearchManga(page, query, filters)
         val url = query.substringAfter(URL_SEARCH_PREFIX)
-        return fetchMangaDetails(SManga.create().apply { setUrlWithoutDomain(url) })
-            .map {
-                it.apply { setUrlWithoutDomain(url) }
-                MangasPage(listOf(it), false)
+        return kotlinx.coroutines.coroutineScope {
+            // For URL-based search, directly return the manga from URL
+            val manga = SManga.create().apply {
+                setUrlWithoutDomain(url)
+                title = url.substringAfterLast("/").substringBefore("-").replace("-", " ")
+                    .capitalizeWords()
             }
+            MangasPage(listOf(manga), false)
+        }
     }
+
+    private fun String.capitalizeWords(): String =
+        split(" ").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var selected = ""

@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.multisrc.grouple
 import android.content.SharedPreferences
 import android.widget.Toast
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -22,7 +21,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.io.IOException
 import java.text.DecimalFormat
 import java.text.ParseException
@@ -397,14 +395,17 @@ abstract class GroupLe(
         else -> "-----"
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = if (manga.status != SManga.LICENSED) {
-        client.newCall(chapterListRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                chapterListParse(response, manga)
-            }
+    override suspend fun getChapterList(manga: SManga): List<SChapter> = if (manga.status != SManga.LICENSED) {
+        val response = client.newCall(chapterListRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        val result = chapterListParse(response, manga)
+        response.close()
+        result
     } else {
-        Observable.error(java.lang.Exception("Лицензировано - Нет глав"))
+        throw Exception("Лицензировано - Нет глав")
     }
 
     protected open fun getChapterSearchParams(document: Document): String {
@@ -580,25 +581,30 @@ abstract class GroupLe(
 
     private fun searchMangaByIdRequest(id: String): Request = GET("$baseUrl/$id", headers)
 
-    override fun fetchSearchManga(
+    override suspend fun getSearchManga(
         page: Int,
         query: String,
         filters: FilterList,
-    ): Observable<MangasPage> = if (query.startsWith(PREFIX_SLUG_SEARCH)) {
+    ): MangasPage = if (query.startsWith(PREFIX_SLUG_SEARCH)) {
         val realQuery = query.removePrefix(PREFIX_SLUG_SEARCH)
-        client.newCall(searchMangaByIdRequest(realQuery))
-            .asObservableSuccess()
-            .map { response ->
-                val details = mangaDetailsParse(response)
-                details.url = "/$realQuery"
-                MangasPage(listOf(details), false)
-            }
+        val response = client.newCall(searchMangaByIdRequest(realQuery)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        val details = mangaDetailsParse(response.asJsoup())
+        details.url = "/$realQuery"
+        response.close()
+        MangasPage(listOf(details), false)
     } else {
-        client.newCall(searchMangaRequest(page, query, filters))
-            .asObservableSuccess()
-            .map { response ->
-                searchMangaParse(response)
-            }
+        val response = client.newCall(searchMangaRequest(page, query, filters)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        val result = super.searchMangaParse(response)
+        response.close()
+        result
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {

@@ -25,7 +25,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -67,25 +66,23 @@ abstract class MangaThemesia(
     override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
 
     // Search
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (query.startsWith(URL_SEARCH_PREFIX).not()) return super.fetchSearchManga(page, query, filters)
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
+        if (query.startsWith(URL_SEARCH_PREFIX).not()) return super.getSearchManga(page, query, filters)
 
         val mangaPath = try {
             mangaPathFromUrl(query.substringAfter(URL_SEARCH_PREFIX))
-                ?: return Observable.just(MangasPage(emptyList(), false))
+                ?: return MangasPage(emptyList(), false)
         } catch (e: Exception) {
-            return Observable.error(e)
+            throw e
         }
 
-        return fetchMangaDetails(
+        val manga = getMangaDetails(
             SManga.create()
                 .apply { this.url = "$mangaUrlDirectory/$mangaPath/" },
         )
-            .map {
-                // Isn't set in returned manga
-                it.url = "$mangaUrlDirectory/$mangaPath/"
-                MangasPage(listOf(it), false)
-            }
+        // Isn't set in returned manga
+        manga.url = "$mangaUrlDirectory/$mangaPath/"
+        return MangasPage(listOf(manga), false)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -584,17 +581,16 @@ abstract class MangaThemesia(
         val potentiallyChapterUrl = pathLengthIs(url, 1)
         if (potentiallyChapterUrl) {
             val response = client.newCall(GET(urlString, headers)).execute()
-            if (response.isSuccessful.not()) {
+            if (!response.isSuccessful) {
                 response.close()
                 throw IllegalStateException("HTTP error ${response.code}")
-            } else if (response.isSuccessful) {
-                val links = response.asJsoup().select("a[itemprop=item]")
-                //  near the top of page: home > manga > current chapter
-                if (links.size == 3) {
-                    val newUrl = links[1].attr("href").toHttpUrlOrNull() ?: return null
-                    val isNewMangaUrl = (baseMangaUrl.host == newUrl.host && pathLengthIs(newUrl, 2) && newUrl.pathSegments[0] == baseMangaUrl.pathSegments[0])
-                    if (isNewMangaUrl) return newUrl.pathSegments[1]
-                }
+            }
+            val links = response.asJsoup().select("a[itemprop=item]")
+            //  near the top of page: home > manga > current chapter
+            if (links.size == 3) {
+                val newUrl = links[1].attr("href").toHttpUrlOrNull() ?: return null
+                val isNewMangaUrl = (baseMangaUrl.host == newUrl.host && pathLengthIs(newUrl, 2) && newUrl.pathSegments[0] == baseMangaUrl.pathSegments[0])
+                if (isNewMangaUrl) return newUrl.pathSegments[1]
             }
         }
 

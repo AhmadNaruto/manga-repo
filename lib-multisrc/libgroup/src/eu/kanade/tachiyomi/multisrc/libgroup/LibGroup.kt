@@ -11,8 +11,6 @@ import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservable
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -35,7 +33,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
@@ -295,15 +292,13 @@ abstract class LibGroup(
 
     override fun mangaDetailsParse(response: Response): SManga = response.parseAs<Data<Manga>>().data.toSManga(isEng())
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> = client.newCall(mangaDetailsRequest(manga))
-        .asObservable().doOnNext { response ->
-            if (!response.isSuccessful) {
-                if (response.code == 404) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎") else throw Exception("HTTP error ${response.code}")
-            }
+    override suspend fun getMangaDetails(manga: SManga): SManga {
+        val response = client.newCall(mangaDetailsRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            if (response.code == 404) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎") else throw Exception("HTTP error ${response.code}")
         }
-        .map { response ->
-            mangaDetailsParse(response)
-        }
+        return mangaDetailsParse(response)
+    }
 
     // Chapters
     override fun chapterListRequest(manga: SManga): Request {
@@ -361,19 +356,15 @@ abstract class LibGroup(
         }.filterNotNull().reversed()
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         if (manga.status == SManga.LICENSED) {
             Log.d("MangaLib", "Manga is licensed: ${manga.title}")
         }
-        return client.newCall(chapterListRequest(manga))
-            .asObservable().doOnNext { response ->
-                if (!response.isSuccessful) {
-                    if (response.code == 404) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎") else throw Exception("HTTP error ${response.code}")
-                }
-            }
-            .map { response ->
-                chapterListParse(response)
-            }
+        val response = client.newCall(chapterListRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            if (response.code == 404) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎") else throw Exception("HTTP error ${response.code}")
+        }
+        return chapterListParse(response)
     }
 
     // Pages
@@ -397,41 +388,43 @@ abstract class LibGroup(
         return response.isSuccessful && (response.header("content-length", "0")?.toInt()!! > 600)
     }
 
-    override fun fetchImageUrl(page: Page): Observable<String> {
+    override suspend fun getImageUrl(page: Page): String {
         if (page.imageUrl != null) {
-            return Observable.just(page.imageUrl)
+            return page.imageUrl!!
         }
         if (isServer() == "auto") {
             for (serverApi in IMG_SERVERS.slice(1 until IMG_SERVERS.size)) {
                 val server = getConstants()?.getServer(serverApi, siteId)?.url
                 val imageUrl = "$server${page.url}"
                 if (checkImage(imageUrl)) {
-                    return Observable.just(imageUrl)
+                    return imageUrl
                 }
             }
         }
         val server = getConstants()?.getServer(isServer(), siteId)?.url ?: throw Exception("Ошибка получения сервера изображений")
-        return Observable.just("$server${page.url}")
+        return "$server${page.url}"
     }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
     override fun imageRequest(page: Page): Request = GET(page.imageUrl!!, imageHeader())
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = if (query.startsWith(PREFIX_SLUG_SEARCH)) {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = if (query.startsWith(PREFIX_SLUG_SEARCH)) {
         val realQuery = query.removePrefix(PREFIX_SLUG_SEARCH).substringBefore("/").substringBefore("?")
-        client.newCall(GET("$apiDomain/api/manga/$realQuery", headers))
-            .asObservableSuccess()
-            .map { response ->
-                val details = response.parseAs<Data<MangaShort>>().data.toSManga(isEng())
-                MangasPage(listOf(details), false)
-            }
+        val response = client.newCall(GET("$apiDomain/api/manga/$realQuery", headers)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        val details = response.parseAs<Data<MangaShort>>().data.toSManga(isEng())
+        return MangasPage(listOf(details), false)
     } else {
-        client.newCall(searchMangaRequest(page, query, filters))
-            .asObservableSuccess()
-            .map { response ->
-                searchMangaParse(response)
-            }
+        val response = client.newCall(searchMangaRequest(page, query, filters)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        return searchMangaParse(response.asJsoup())
     }
 
     // Search

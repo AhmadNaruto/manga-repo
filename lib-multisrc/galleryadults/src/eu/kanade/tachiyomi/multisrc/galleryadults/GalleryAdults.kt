@@ -6,7 +6,6 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -33,8 +32,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import rx.Observable
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 
 abstract class GalleryAdults(
@@ -142,33 +139,45 @@ abstract class GalleryAdults(
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     /* Search */
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         val randomEntryFilter = filters.filterIsInstance<RandomEntryFilter>().firstOrNull()
 
         return when {
             randomEntryFilter?.state == true -> {
-                client.newCall(randomEntryRequest())
-                    .asObservableSuccess()
-                    .map { response -> randomEntryParse(response) }
+                val response = client.newCall(randomEntryRequest()).execute()
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw Exception("HTTP error ${response.code}")
+                }
+                randomEntryParse(response.asJsoup())
             }
 
             query.startsWith(PREFIX_ID_SEARCH) -> {
                 val id = query.removePrefix(PREFIX_ID_SEARCH)
-                client.newCall(searchMangaByIdRequest(id))
-                    .asObservableSuccess()
-                    .map { response -> searchMangaByIdParse(response, id) }
+                val response = client.newCall(searchMangaByIdRequest(id)).execute()
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw Exception("HTTP error ${response.code}")
+                }
+                searchMangaByIdParse(response.asJsoup(), id)
             }
 
             query.toIntOrNull() != null -> {
-                client.newCall(searchMangaByIdRequest(query))
-                    .asObservableSuccess()
-                    .map { response -> searchMangaByIdParse(response, query) }
+                val response = client.newCall(searchMangaByIdRequest(query)).execute()
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw Exception("HTTP error ${response.code}")
+                }
+                searchMangaByIdParse(response.asJsoup(), query)
             }
 
             else -> {
-                client.newCall(searchMangaRequest(page, query, filters))
-                    .asObservableSuccess()
-                    .map { response -> searchMangaParse(response) }
+                val response = client.newCall(searchMangaRequest(page, query, filters)).execute()
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw Exception("HTTP error ${response.code}")
+                }
+                searchMangaParse(response.asJsoup())
             }
         }
     }

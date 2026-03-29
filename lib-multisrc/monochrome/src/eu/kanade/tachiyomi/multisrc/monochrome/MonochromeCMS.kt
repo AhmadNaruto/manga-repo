@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.monochrome
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -12,8 +11,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.Response
-import rx.Observable
-import uy.kohesive.injekt.injectLazy
 
 open class MonochromeCMS(
     override val name: String,
@@ -38,26 +35,34 @@ open class MonochromeCMS(
         MangasPage(it.map(::mangaFromAPI), it.hasNext)
     }
 
-    override fun fetchSearchManga(
+    override suspend fun getSearchManga(
         page: Int,
         query: String,
         filters: FilterList,
-    ): Observable<MangasPage> {
+    ): MangasPage {
         if (!query.startsWith(UUID_QUERY)) {
-            return super.fetchSearchManga(page, query, filters)
+            return super.getSearchManga(page, query, filters)
         }
         val req = GET("$apiUrl/manga/${query.substringAfter(UUID_QUERY)}")
-        return client.newCall(req).asObservableSuccess().map {
-            MangasPage(listOf(mangaFromAPI(it.decode())), false)
+        val response = client.newCall(req).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
         }
+        return MangasPage(listOf(mangaFromAPI(response.decode())), false)
     }
 
-    override fun fetchMangaDetails(manga: SManga) = Observable.just(manga.apply { initialized = true })!!
+    override suspend fun getMangaDetails(manga: SManga) = manga.apply { initialized = true }
 
     override fun chapterListRequest(manga: SManga) = GET("$apiUrl/manga/${manga.url}/chapters", headers)
 
-    override fun fetchChapterList(manga: SManga) = client.newCall(chapterListRequest(manga)).asObservableSuccess().map {
-        it.decode<List<Chapter>>().map { ch ->
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
+        val response = client.newCall(chapterListRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        return response.decode<List<Chapter>>().map { ch ->
             SChapter.create().apply {
                 name = ch.title
                 url = manga.url + ch.parts
@@ -66,14 +71,14 @@ open class MonochromeCMS(
                 scanlator = ch.scanGroup
             }
         }
-    }!!
+    }
 
-    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+    override suspend fun getPageList(chapter: SChapter): List<Page> {
         val (uuid, version, length) = chapter.url.split('|')
         val pages = IntRange(1, length.toInt()).map {
             Page(it, "", "$apiUrl/media/$uuid/$it.jpg?version=$version")
         }
-        return Observable.just(pages)
+        return pages
     }
 
     override fun getMangaUrl(manga: SManga) = "$baseUrl/manga/${manga.url}"

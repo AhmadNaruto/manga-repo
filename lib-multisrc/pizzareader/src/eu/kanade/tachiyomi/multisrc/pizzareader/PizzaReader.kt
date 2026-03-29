@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.pizzareader
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -14,7 +13,6 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -81,8 +79,14 @@ abstract class PizzaReader(
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
     // Workaround to allow "Open in browser" to use the real URL
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> = client.newCall(chapterListRequest(manga)).asObservableSuccess()
-        .map { mangaDetailsParse(it).apply { initialized = true } }
+    override suspend fun getMangaDetails(manga: SManga): SManga {
+        val response = client.newCall(chapterListRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        return mangaDetailsParse(response.asJsoup()).apply { initialized = true }
+    }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
         val result = json.decodeFromString<PizzaResultDto>(response.body.string())

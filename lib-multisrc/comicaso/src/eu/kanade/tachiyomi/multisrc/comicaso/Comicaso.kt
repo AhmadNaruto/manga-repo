@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.comicaso
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -14,7 +13,6 @@ import keiyoushi.utils.parseAs
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
-import rx.Observable
 
 abstract class Comicaso(
     override val name: String,
@@ -34,24 +32,25 @@ abstract class Comicaso(
 
     private var cachedMangaList: List<MangaDto>? = null
 
-    private fun getMangaList(): Observable<List<MangaDto>> = cachedMangaList?.let { Observable.just(it) }
-        ?: client.newCall(GET("$baseUrl/wp-content/static/manga/index.json", headers))
-            .asObservableSuccess()
-            .map { response ->
-                response.parseAs<List<MangaDto>>().also {
-                    cachedMangaList = it
-                }
-            }
+    private suspend fun getMangaList(): List<MangaDto> = cachedMangaList?.let { it } ?: run {
+        val response = client.newCall(GET("$baseUrl/wp-content/static/manga/index.json", headers)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        response.parseAs<List<MangaDto>>().also {
+            cachedMangaList = it
+        }
+    }
 
     // ============================== Popular ===============================
 
-    override fun fetchPopularManga(page: Int): Observable<MangasPage> {
-        return getMangaList().map { mangas ->
-            val start = (page - 1) * pageSize
-            if (start >= mangas.size) return@map MangasPage(emptyList(), false)
-            val end = minOf(start + pageSize, mangas.size)
-            MangasPage(mangas.subList(start, end).map { it.toSManga() }, end < mangas.size)
-        }
+    override suspend fun getPopularManga(page: Int): MangasPage {
+        val mangas = getMangaList()
+        val start = (page - 1) * pageSize
+        if (start >= mangas.size) return MangasPage(emptyList(), false)
+        val end = minOf(start + pageSize, mangas.size)
+        return MangasPage(mangas.subList(start, end).map { it.toSManga() }, end < mangas.size)
     }
 
     override fun popularMangaRequest(page: Int): Request = throw UnsupportedOperationException()
@@ -59,14 +58,13 @@ abstract class Comicaso(
 
     // =============================== Latest ===============================
 
-    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
-        return getMangaList().map { mangas ->
-            val sortedMangas = mangas.sortedByDescending { it.updatedAt ?: it.mangaDate ?: 0L }
-            val start = (page - 1) * pageSize
-            if (start >= mangas.size) return@map MangasPage(emptyList(), false)
-            val end = minOf(start + pageSize, mangas.size)
-            MangasPage(sortedMangas.subList(start, end).map { it.toSManga() }, end < sortedMangas.size)
-        }
+    override suspend fun getLatestUpdates(page: Int): MangasPage {
+        val mangas = getMangaList()
+        val sortedMangas = mangas.sortedByDescending { it.updatedAt ?: it.mangaDate ?: 0L }
+        val start = (page - 1) * pageSize
+        if (start >= mangas.size) return MangasPage(emptyList(), false)
+        val end = minOf(start + pageSize, mangas.size)
+        return MangasPage(sortedMangas.subList(start, end).map { it.toSManga() }, end < sortedMangas.size)
     }
 
     override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
@@ -74,7 +72,7 @@ abstract class Comicaso(
 
     // =============================== Search ===============================
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (query.isNotEmpty()) {
             val url = when {
                 query.startsWith(URL_SEARCH_PREFIX) ->
@@ -86,47 +84,46 @@ abstract class Comicaso(
 
             if (url != null) {
                 val mangaSlug = url.substringAfter("/komik/").substringBefore("/")
-                return fetchMangaDetails(SManga.create().apply { this.url = mangaSlug })
-                    .map { MangasPage(listOf(it), false) }
+                val manga = getMangaDetails(SManga.create().apply { this.url = mangaSlug })
+                return MangasPage(listOf(manga), false)
             }
         }
 
-        return getMangaList().map { mangas ->
-            var filteredMangas = mangas
+        val mangas = getMangaList()
+        var filteredMangas = mangas
 
-            if (query.isNotEmpty()) {
-                filteredMangas = filteredMangas.filter { it.title.contains(query, ignoreCase = true) }
-            }
+        if (query.isNotEmpty()) {
+            filteredMangas = filteredMangas.filter { it.title.contains(query, ignoreCase = true) }
+        }
 
-            filters.forEach { filter ->
-                when (filter) {
-                    is GenreFilter -> {
-                        if (filter.state > 0) {
-                            val genre = filter.values[filter.state]
-                            filteredMangas = filteredMangas.filter { it.genres?.contains(genre) == true }
-                        }
+        filters.forEach { filter ->
+            when (filter) {
+                is GenreFilter -> {
+                    if (filter.state > 0) {
+                        val genre = filter.values[filter.state]
+                        filteredMangas = filteredMangas.filter { it.genres?.contains(genre) == true }
                     }
-                    is StatusFilter -> {
-                        if (filter.state > 0) {
-                            val status = filter.values[filter.state].lowercase()
-                            filteredMangas = filteredMangas.filter { it.status == status }
-                        }
-                    }
-                    is TypeFilter -> {
-                        if (filter.state > 0) {
-                            val type = filter.values[filter.state].lowercase()
-                            filteredMangas = filteredMangas.filter { it.type == type }
-                        }
-                    }
-                    else -> {}
                 }
+                is StatusFilter -> {
+                    if (filter.state > 0) {
+                        val status = filter.values[filter.state].lowercase()
+                        filteredMangas = filteredMangas.filter { it.status == status }
+                    }
+                }
+                is TypeFilter -> {
+                    if (filter.state > 0) {
+                        val type = filter.values[filter.state].lowercase()
+                        filteredMangas = filteredMangas.filter { it.type == type }
+                    }
+                }
+                else -> {}
             }
-
-            val start = (page - 1) * pageSize
-            if (start >= filteredMangas.size) return@map MangasPage(emptyList(), false)
-            val end = minOf(start + pageSize, filteredMangas.size)
-            MangasPage(filteredMangas.subList(start, end).map { it.toSManga() }, end < filteredMangas.size)
         }
+
+        val start = (page - 1) * pageSize
+        if (start >= filteredMangas.size) return MangasPage(emptyList(), false)
+        val end = minOf(start + pageSize, filteredMangas.size)
+        return MangasPage(filteredMangas.subList(start, end).map { it.toSManga() }, end < filteredMangas.size)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw UnsupportedOperationException()

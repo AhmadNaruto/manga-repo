@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -25,8 +24,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -84,13 +81,14 @@ abstract class Senkuro(
     override fun latestUpdatesParse(response: Response): MangasPage = throw NotImplementedError("Unused")
 
     // Search
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         fetchTachiyomiSearchFilters(page) // reset filters before sending searchMangaRequest
-        return client.newCall(searchMangaRequest(page, query, filters))
-            .asObservableSuccess()
-            .map { response ->
-                searchMangaParse(response)
-            }
+        val response = client.newCall(searchMangaRequest(page, query, filters)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        return searchMangaParse(response.asJsoup())
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -282,11 +280,14 @@ abstract class Senkuro(
         }
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = client.newCall(chapterListRequest(manga))
-        .asObservableSuccess()
-        .map { response ->
-            chapterListParse(response, manga)
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
+        val response = client.newCall(chapterListRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
         }
+        return chapterListParse(response, manga)
+    }
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException()
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
         val chaptersList = json.decodeFromString<PageWrapperDto<MangaTachiyomiChaptersDto>>(response.body.string())
@@ -337,7 +338,7 @@ abstract class Senkuro(
 
     override fun imageUrlParse(response: Response): String = throw NotImplementedError("Unused")
 
-    override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.url)
+    override suspend fun getImageUrl(page: Page): String = page.url
 
     // Filters
     // Filters are fetched immediately once an extension loads

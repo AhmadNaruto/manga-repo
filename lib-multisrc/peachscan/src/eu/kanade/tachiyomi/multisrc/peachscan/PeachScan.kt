@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.multisrc.peachscan
 
 import android.annotation.SuppressLint
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -21,7 +20,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -72,16 +70,17 @@ abstract class PeachScan(
 
     override fun latestUpdatesNextPageSelector() = null
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (query.startsWith(URL_SEARCH_PREFIX)) {
             val manga = SManga.create().apply { url = query.substringAfter(URL_SEARCH_PREFIX) }
-            return client.newCall(mangaDetailsRequest(manga))
-                .asObservableSuccess()
-                .map {
-                    MangasPage(listOf(mangaDetailsParse(it).apply { url = manga.url }), false)
-                }
+            val response = client.newCall(mangaDetailsRequest(manga)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            return MangasPage(listOf(mangaDetailsParse(response.asJsoup()).apply { url = manga.url }), false)
         }
-        return super.fetchSearchManga(page, query, filters)
+        return super.getSearchManga(page, query, filters)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {

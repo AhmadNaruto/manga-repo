@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.id.dreamteamsscans
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,7 +13,6 @@ import keiyoushi.utils.parseAs
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 
 class DreamTeamsScans : HttpSource() {
 
@@ -74,7 +72,7 @@ class DreamTeamsScans : HttpSource() {
 
     // =============================== Search ===============================
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         val slug = when {
             query.startsWith(PREFIX_ID_SEARCH) -> query.removePrefix(PREFIX_ID_SEARCH)
             query.startsWith("$baseUrl/comic/") -> query.substringAfter("/comic/").substringBefore("/")
@@ -82,14 +80,18 @@ class DreamTeamsScans : HttpSource() {
         }
 
         return if (slug != null) {
-            client.newCall(GET("$apiBaseUrl/series/comic/$slug", headers))
-                .asObservableSuccess()
-                .map { response ->
-                    val dto = response.parseAs<MangaDetailsDto>()
-                    MangasPage(listOf(dto.toSManga()), false)
+            kotlinx.coroutines.coroutineScope {
+                val response = client.newCall(GET("$apiBaseUrl/series/comic/$slug", headers))
+                    .execute()
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw IllegalStateException("HTTP error ${response.code}")
                 }
+                val dto = response.parseAs<MangaDetailsDto>()
+                MangasPage(listOf(dto.toSManga()), false)
+            }
         } else {
-            super.fetchSearchManga(page, query, filters)
+            super.getSearchManga(page, query, filters)
         }
     }
 

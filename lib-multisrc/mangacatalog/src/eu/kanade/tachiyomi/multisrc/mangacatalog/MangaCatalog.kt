@@ -11,7 +11,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 // Based On the original manga maniac source
 // MangaCatalog is a network of sites for single franshise sites
@@ -35,7 +34,7 @@ abstract class MangaCatalog(
     override val supportsLatest: Boolean = false
 
     // Popular
-    override fun fetchPopularManga(page: Int): Observable<MangasPage> = Observable.just(MangasPage(sourceList.map { popularMangaFromPair(it.first, it.second) }, false))
+    override suspend fun getPopularManga(page: Int): MangasPage = MangasPage(sourceList.map { popularMangaFromPair(it.first, it.second) }, false)
     private fun popularMangaFromPair(name: String, sourceurl: String): SManga = SManga.create().apply {
         title = name
         url = sourceurl
@@ -53,14 +52,14 @@ abstract class MangaCatalog(
 
     // Search
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         val mangas = mutableListOf<SManga>()
         sourceList.map {
             if (it.first.contains(query)) {
                 mangas.add(popularMangaFromPair(it.first, it.second))
             }
         }
-        return Observable.just(MangasPage(mangas, false))
+        return MangasPage(mangas, false)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = throw UnsupportedOperationException()

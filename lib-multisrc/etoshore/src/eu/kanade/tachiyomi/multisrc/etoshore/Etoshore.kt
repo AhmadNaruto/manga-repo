@@ -14,7 +14,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 abstract class Etoshore(
     override val name: String,
@@ -80,14 +79,14 @@ abstract class Etoshore(
         return GET(url.build(), headers)
     }
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (query.startsWith(PREFIX_SEARCH)) {
             val slug = query.substringAfter(PREFIX_SEARCH)
-            return fetchMangaDetails(SManga.create().apply { url = "/manga/$slug/" })
-                .map { manga -> MangasPage(listOf(manga), false) }
+            val manga = getMangaDetails(SManga.create().apply { url = "/manga/$slug/" })
+            return MangasPage(listOf(manga), false)
         }
 
-        return super.fetchSearchManga(page, query, filters)
+        return super.getSearchManga(page, query, filters)
     }
 
     override fun searchMangaSelector() = ".search-posts .chapter-box .poster a"

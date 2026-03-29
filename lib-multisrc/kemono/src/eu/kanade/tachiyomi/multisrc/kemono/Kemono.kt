@@ -22,7 +22,6 @@ import okhttp3.CacheControl
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -86,17 +85,11 @@ open class Kemono(
 
     override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun fetchPopularManga(page: Int): Observable<MangasPage> = Observable.fromCallable {
-        searchMangas(page, sortBy = "pop" to "desc")
-    }
+    override suspend fun getPopularManga(page: Int): MangasPage = searchMangas(page, sortBy = "pop" to "desc")
 
-    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> = Observable.fromCallable {
-        searchMangas(page, sortBy = "lat" to "desc")
-    }
+    override suspend fun getLatestUpdates(page: Int): MangasPage = searchMangas(page, sortBy = "lat" to "desc")
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = Observable.fromCallable {
-        searchMangas(page, query, filters)
-    }
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = searchMangas(page, query, filters)
 
     private fun searchMangas(page: Int = 1, title: String = "", filters: FilterList? = null, sortBy: Pair<String, String> = "" to ""): MangasPage {
         var sort = sortBy
@@ -227,16 +220,16 @@ open class Kemono(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = throw UnsupportedOperationException()
     override fun searchMangaParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+    override suspend fun getMangaDetails(manga: SManga): SManga {
         manga.thumbnail_url = manga.thumbnail_url!!.formatAvatarUrl()
-        return Observable.just(manga)
+        return manga
     }
 
     override fun mangaDetailsParse(response: Response) = throw UnsupportedOperationException()
 
     override fun getChapterUrl(chapter: SChapter) = "$baseUrl${chapter.url.replace("$apiPath/", "")}"
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         KemonoPostDto.dateFormat.timeZone = when (manga.author) {
             "Pixiv Fanbox", "Fantia" -> TimeZone.getTimeZone("GMT+09:00")
             else -> TimeZone.getTimeZone("GMT")
@@ -253,7 +246,7 @@ open class Kemono(
             offset += PAGE_POST_LIMIT
             hasNextPage = page.size == PAGE_POST_LIMIT
         }
-        result
+        return result
     }
 
     private fun retry(request: Request): Response {

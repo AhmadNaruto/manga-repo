@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -25,8 +24,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
-import rx.schedulers.Schedulers
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -86,20 +83,20 @@ abstract class HentaiHand(
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
-    private fun lookupFilterId(query: String, uri: String): Int? {
+    private suspend fun lookupFilterId(query: String, uri: String): Int? {
         // filter query needs to be resolved to an ID
-        return client.newCall(GET("$baseUrl/api/$uri?q=$query"))
-            .asObservableSuccess()
-            .subscribeOn(Schedulers.io())
-            .map { response ->
-                // Returns the first matched id, or null if there are no results
-                val idList = response.parseAs<ResponseDto<List<IdDto>>>().data.map { it.id }
-                if (idList.isEmpty()) {
-                    return@map null
-                } else {
-                    idList.first().toInt()
-                }
-            }.toBlocking().first()
+        val response = client.newCall(GET("$baseUrl/api/$uri?q=$query")).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            return null
+        }
+        // Returns the first matched id, or null if there are no results
+        val idList = response.parseAs<ResponseDto<List<IdDto>>>().data.map { it.id }
+        if (idList.isEmpty()) {
+            return null
+        } else {
+            idList.first().toInt()
+        }
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -151,9 +148,14 @@ abstract class HentaiHand(
         return GET("$baseUrl/api/comics/$slug")
     }
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> = client.newCall(mangaDetailsApiRequest(manga))
-        .asObservableSuccess()
-        .map { mangaDetailsParse(it).apply { initialized = true } }
+    override suspend fun getMangaDetails(manga: SManga): SManga {
+        val response = client.newCall(mangaDetailsApiRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        return mangaDetailsParse(response.asJsoup()).apply { initialized = true }
+    }
 
     override fun mangaDetailsParse(response: Response): SManga = response.parseAs<MangaDetailsResponseDto>().toSMangaDetails()
 

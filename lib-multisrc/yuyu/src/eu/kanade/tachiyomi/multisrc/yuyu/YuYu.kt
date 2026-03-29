@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.multisrc.yuyu
 
 import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -18,7 +17,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.net.URLEncoder
 
 abstract class YuYu(
@@ -92,17 +90,18 @@ abstract class YuYu(
         return GET(url.build(), headers)
     }
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (query.startsWith(PREFIX_SEARCH)) {
             val slug = query.substringAfter(PREFIX_SEARCH)
-            return client.newCall(GET("$baseUrl/manga/$slug", headers))
-                .asObservableSuccess()
-                .map {
-                    val manga = mangaDetailsParse(it.asJsoup())
-                    MangasPage(listOf(manga), false)
-                }
+            val response = client.newCall(GET("$baseUrl/manga/$slug", headers)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            val manga = mangaDetailsParse(response.asJsoup())
+            return MangasPage(listOf(manga), false)
         }
-        return super.fetchSearchManga(page, query, filters)
+        return super.getSearchManga(page, query, filters)
     }
 
     override fun searchMangaSelector() = ".search-result-item"

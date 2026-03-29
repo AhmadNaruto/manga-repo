@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.id.narasininja
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -18,7 +17,6 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -118,9 +116,15 @@ class NarasiNinja : HttpSource() {
 
     // ── SEARCH ────────────────────────────────────────────────────────────────
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = client.newCall(searchMangaRequest(page, query, filters))
-        .asObservableSuccess()
-        .map { searchMangaParse(it) }
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = kotlinx.coroutines.coroutineScope {
+        val response = client.newCall(searchMangaRequest(page, query, filters))
+            .execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw IllegalStateException("HTTP error ${response.code}")
+        }
+        searchMangaParse(response)
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = buildFilterRequest(page, query, filters)
 

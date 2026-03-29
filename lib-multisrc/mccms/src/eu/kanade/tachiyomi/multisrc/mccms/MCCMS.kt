@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.mccms
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -13,7 +12,6 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import java.net.URLEncoder
 import keiyoushi.utils.parseAs as parseAsRaw
 
@@ -89,30 +87,40 @@ open class MCCMS(
 
     override fun getMangaUrl(manga: SManga) = baseUrl + manga.url
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+    override suspend fun getMangaDetails(manga: SManga): SManga {
         val url = "$baseUrl/api/data/comic".toHttpUrl().newBuilder()
             .addQueryParameter("key", manga.title)
             .toString()
         val mangaUrl = manga.url
-        return client.newCall(GET(url, headers))
-            .asObservableSuccess().map { response ->
-                val list = response.parseAs<List<MangaDto>>()
-                list.first { it.cleanUrl == mangaUrl }.toSManga().cleanup()
-            }
+        val response = client.newCall(GET(url, headers)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        val list = response.parseAs<List<MangaDto>>()
+        return list.first { it.cleanUrl == mangaUrl }.toSManga().cleanup()
     }
 
     override fun mangaDetailsParse(response: Response): SManga = throw UnsupportedOperationException()
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         val id = manga.thumbnail_url!!.substringAfterLast('#', missingDelimiterValue = "").ifEmpty { throw Exception("请刷新漫画") }
         val dataResponse = client.newCall(GET("$baseUrl/api/data/chapter?mid=$id", headers)).execute()
+        if (!dataResponse.isSuccessful) {
+            dataResponse.close()
+            throw Exception("HTTP error ${dataResponse.code}")
+        }
         val dataList: List<ChapterDataDto> = dataResponse.parseAs() // unordered
         val dateMap = HashMap<Int, Long>(dataList.size * 2)
         dataList.forEach { dateMap[it.id.toInt()] = it.date }
         val response = client.newCall(GET("$baseUrl/api/comic/chapter?mid=$id", headers)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
         val list: List<ChapterDto> = response.parseAs()
         val result = list.map { it.toSChapter(date = dateMap[it.id.toInt()] ?: 0) }.asReversed()
-        result
+        return result
     }
 
     override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException()

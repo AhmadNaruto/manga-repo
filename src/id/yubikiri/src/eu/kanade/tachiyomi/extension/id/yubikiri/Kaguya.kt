@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -46,13 +45,17 @@ class Kaguya :
     }
 
     // ============================== Chapters ==============================
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable { fetchAllChapters(manga) }
-
-    private fun fetchAllChapters(manga: SManga): List<SChapter> {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         val chapters = mutableListOf<SChapter>()
         var page = 1
         while (true) {
-            val response = client.newCall(POST("${getMangaUrl(manga)}ajax/chapters?t=${page++}", xhrHeaders)).execute()
+            val response = kotlinx.coroutines.coroutineScope {
+                client.newCall(POST("${getMangaUrl(manga)}ajax/chapters?t=${page++}", xhrHeaders)).execute()
+            }
+            if (!response.isSuccessful) {
+                response.close()
+                throw IllegalStateException("HTTP error ${response.code}")
+            }
             val document = response.asJsoup()
             val currentPage = document.select(chapterListSelector())
                 .map(::chapterFromElement)
@@ -61,9 +64,10 @@ class Kaguya :
             response.close()
 
             if (currentPage.isEmpty()) {
-                return chapters
+                break
             }
         }
+        return chapters
     }
 
     // ============================== Filter ==============================

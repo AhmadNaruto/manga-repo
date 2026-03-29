@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.multisrc.madara
 import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -27,7 +26,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -253,25 +251,28 @@ abstract class Madara(
 
     // Search Manga
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (query.startsWith(URL_SEARCH_PREFIX)) {
             val mangaUrl = baseUrl.toHttpUrl().newBuilder().apply {
                 addPathSegment(mangaSubString)
                 addPathSegment(query.substringAfter(URL_SEARCH_PREFIX))
                 addPathSegment("") // add trailing slash
             }.build()
-            return client.newCall(GET(mangaUrl, headers))
-                .asObservableSuccess().map { response ->
-                    val manga = mangaDetailsParse(response).apply {
-                        setUrlWithoutDomain(mangaUrl.toString())
-                        initialized = true
-                    }
+            val response = client.newCall(GET(mangaUrl, headers)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            val manga = mangaDetailsParse(response.asJsoup()).apply {
+                setUrlWithoutDomain(mangaUrl.toString())
+                initialized = true
+            }
+            response.close()
 
-                    MangasPage(listOf(manga), false)
-                }
+            return MangasPage(listOf(manga), false)
         }
 
-        return super.fetchSearchManga(page, query, filters)
+        return super.getSearchManga(page, query, filters)
     }
 
     protected open fun searchPage(page: Int): String = if (page == 1) {

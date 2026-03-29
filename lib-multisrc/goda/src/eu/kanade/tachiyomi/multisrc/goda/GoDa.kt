@@ -15,7 +15,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Entities
-import rx.Observable
 
 open class GoDa(
     override val name: String,
@@ -99,13 +98,13 @@ open class GoDa(
         thumbnail_url = document.selectFirst("img.object-cover")!!.attr("src")
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         val mangaId = manga.description
             ?.substringAfterLast("ID: ", "")
             ?.takeIf { it.toIntOrNull() != null }
             ?: client.newCall(mangaDetailsRequest(manga)).execute().asJsoup().getMangaId()
 
-        fetchChapterList(mangaId)
+        return fetchChapterList(mangaId)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException()

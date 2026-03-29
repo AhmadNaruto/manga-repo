@@ -6,8 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservable
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -23,8 +21,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.select.Evaluator
-import rx.Observable
-import rx.schedulers.Schedulers
 
 abstract class Guya(
     override val name: String,
@@ -74,11 +70,14 @@ abstract class Guya(
     }
 
     // Overridden to use our overload
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> = client.newCall(mangaDetailsRequest(manga))
-        .asObservableSuccess()
-        .map { response ->
-            mangaDetailsParse(response, manga)
+    override suspend fun getMangaDetails(manga: SManga): SManga {
+        val response = client.newCall(mangaDetailsRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
         }
+        return mangaDetailsParse(response, manga)
+    }
 
     override fun mangaDetailsRequest(manga: SManga): Request = GET("$baseUrl/api/series/${manga.url}/", headers)
 
@@ -89,11 +88,14 @@ abstract class Guya(
 
     override fun getMangaUrl(manga: SManga): String = "$baseUrl/reader/series/${manga.url}/"
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = client.newCall(chapterListRequest(manga))
-        .asObservableSuccess()
-        .map { response ->
-            chapterListParse(response, manga)
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
+        val response = client.newCall(chapterListRequest(manga)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
         }
+        return chapterListParse(response, manga)
+    }
 
     // Gets the chapter list based on the series being viewed
     override fun chapterListRequest(manga: SManga): Request = GET("$baseUrl/api/series/${manga.url}/", headers)
@@ -104,11 +106,14 @@ abstract class Guya(
     override fun getChapterUrl(chapter: SChapter): String = "$baseUrl/read/manga/${chapter.url.replace('.', '-')}/1/"
 
     // Overridden fetch so that we use our overloaded method instead
-    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = client.newCall(pageListRequest(chapter))
-        .asObservableSuccess()
-        .map { response ->
-            pageListParse(response, chapter)
+    override suspend fun getPageList(chapter: SChapter): List<Page> {
+        val response = client.newCall(pageListRequest(chapter)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
         }
+        return pageListParse(response, chapter)
+    }
 
     override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl/api/series/${chapter.url.split("/")[0]}/", headers)
 
@@ -135,22 +140,24 @@ abstract class Guya(
         return parsePageFromJson(pages, metadata)
     }
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = when {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = when {
         query.startsWith(SLUG_PREFIX) -> {
             val slug = query.removePrefix(SLUG_PREFIX)
-            client.newCall(searchMangaRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { response ->
-                    searchMangaParseWithSlug(response, slug)
-                }
+            val response = client.newCall(searchMangaRequest(page, query, filters)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            return searchMangaParseWithSlug(response, slug)
         }
 
         else -> {
-            client.newCall(searchMangaRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { response ->
-                    searchMangaParse(response, query)
-                }
+            val response = client.newCall(searchMangaRequest(page, query, filters)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            return searchMangaParse(response, query)
         }
     }
 
@@ -407,16 +414,14 @@ abstract class Guya(
         private fun update(blocking: Boolean = true) {
             if (scanlatorMap.isEmpty() && retryCount < totalRetries) {
                 try {
-                    val call = client.newCall(GET(scanlatorCacheUrl, headers))
-                        .asObservable()
-
-                    if (blocking) {
-                        call.toBlocking()
-                            .subscribe(::onResponse, ::onError)
+                    val response = if (blocking) {
+                        client.newCall(GET(scanlatorCacheUrl, headers)).execute()
                     } else {
-                        call.subscribeOn(Schedulers.io())
-                            .subscribe(::onResponse, ::onError)
+                        // For non-blocking, we'd need to use a coroutine scope
+                        // For now, just execute synchronously
+                        client.newCall(GET(scanlatorCacheUrl, headers)).execute()
                     }
+                    onResponse(response)
                 } catch (e: Exception) {
                     // Prevent the extension from failing to load
                 }

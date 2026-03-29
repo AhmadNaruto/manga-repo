@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.madtheme
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -21,7 +20,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -169,16 +167,17 @@ abstract class MadTheme(
     }
 
     // Chapters
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         // API is heavily rate limited. Use custom client
         return if (manga.status != SManga.LICENSED) {
-            chapterClient.newCall(chapterListRequest(manga))
-                .asObservable()
-                .map { response ->
-                    chapterListParse(response)
-                }
+            val response = chapterClient.newCall(chapterListRequest(manga)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            chapterListParse(response.asJsoup())
         } else {
-            Observable.error(Exception("Licensed - No chapters to show"))
+            throw Exception("Licensed - No chapters to show")
         }
     }
 

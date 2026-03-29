@@ -17,7 +17,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
-import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -122,17 +121,17 @@ abstract class MyMangaCMS(
 
     //region Search
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = when {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = when {
         query.startsWith(PREFIX_URL_SEARCH) -> {
-            fetchMangaDetails(
+            val manga = getMangaDetails(
                 SManga.create().apply {
                     url = query.removePrefix(PREFIX_URL_SEARCH).trim().replace(baseUrl, "")
                 },
             )
-                .map { MangasPage(listOf(it), false) }
+            MangasPage(listOf(manga), false)
         }
 
-        else -> super.fetchSearchManga(page, query, filters)
+        else -> super.getSearchManga(page, query, filters)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET(

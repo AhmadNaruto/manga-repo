@@ -25,7 +25,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.concurrent.thread
@@ -151,9 +150,9 @@ abstract class HeanCms(
 
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (!query.startsWith(SEARCH_PREFIX)) {
-            return super.fetchSearchManga(page, query, filters)
+            return super.getSearchManga(page, query, filters)
         }
 
         val slug = query.substringAfter(SEARCH_PREFIX)
@@ -162,7 +161,8 @@ abstract class HeanCms(
             url = "/$mangaSubDirectory/$slug#$mangaId"
         }
 
-        return fetchMangaDetails(manga).map { MangasPage(listOf(it), false) }
+        val mangaDetails = getMangaDetails(manga)
+        return MangasPage(listOf(mangaDetails), false)
     }
 
     private fun getIdBySlug(slug: String): Int {

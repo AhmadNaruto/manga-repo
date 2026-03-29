@@ -17,7 +17,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -130,9 +129,9 @@ abstract class StalkerCms(
 
     // ============================== Chapters =================================
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         val urlBuilder = getMangaUrl(manga).toHttpUrl().newBuilder()
-        buildList {
+        return buildList {
             var page = 1
             do {
                 val url = urlBuilder

@@ -17,7 +17,6 @@ import okio.IOException
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
-import rx.Observable
 
 open class MCCMSWeb(
     override val name: String,
@@ -114,9 +113,9 @@ open class MCCMSWeb(
         return result
     }
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        if (manga.url == "/search") return Observable.just(manga)
-        return super.fetchMangaDetails(manga)
+    override suspend fun getMangaDetails(manga: SManga): SManga {
+        if (manga.url == "/search") return manga
+        return super.getMangaDetails(manga)
     }
 
     override fun getMangaUrl(manga: SManga) = baseUrl.mobileUrl() + manga.url
@@ -134,9 +133,9 @@ open class MCCMSWeb(
         }
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        if (manga.url == "/search") return Observable.just(emptyList())
-        return super.fetchChapterList(manga)
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
+        if (manga.url == "/search") return emptyList()
+        return super.getChapterList(manga)
     }
 
     override fun chapterListRequest(manga: SManga) = GET(baseUrl + manga.url, pcHeaders)

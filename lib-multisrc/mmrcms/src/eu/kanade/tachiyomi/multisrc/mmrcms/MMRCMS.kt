@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -27,7 +26,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -128,20 +126,25 @@ constructor(
 
     protected var searchDirectory = emptyList<SuggestionDto>()
 
-    override fun fetchSearchManga(
+    override suspend fun getSearchManga(
         page: Int,
         query: String,
         filters: FilterList,
-    ): Observable<MangasPage> = if (query.isNotEmpty()) {
+    ): MangasPage = if (query.isNotEmpty()) {
         if (page == 1) {
-            client.newCall(searchMangaRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { searchMangaParse(it) }
+            val response = client.newCall(searchMangaRequest(page, query, filters)).execute()
+            if (!response.isSuccessful) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
+            val result = searchMangaParse(response)
+            response.close()
+            result
         } else {
-            Observable.just(parseSearchDirectory(page))
+            parseSearchDirectory(page)
         }
     } else {
-        super.fetchSearchManga(page, query, filters)
+        super.getSearchManga(page, query, filters)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {

@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.eromuse
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -16,7 +15,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 @ExperimentalStdlibApi
 open class EroMuse(override val name: String, override val baseUrl: String) : HttpSource() {
@@ -175,33 +173,36 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
 
     // Popular
 
-    protected fun fetchManga(url: String, page: Int, sortingMode: String): Observable<MangasPage> {
+    protected suspend fun fetchManga(url: String, page: Int, sortingMode: String): MangasPage {
         if (page == 1) {
             pageStack.clear()
             pageStack.addLast(StackItem(url, VARIOUS_AUTHORS))
             currentSortingMode = sortingMode
         }
 
-        return client.newCall(stackRequest())
-            .asObservableSuccess()
-            .map { response -> parseManga(response.asJsoup()) }
+        val response = client.newCall(stackRequest()).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        return parseManga(response.asJsoup())
     }
 
-    override fun fetchPopularManga(page: Int): Observable<MangasPage> = fetchManga("$baseUrl/comics/album/Various-Authors", page, "")
+    override suspend fun getPopularManga(page: Int): MangasPage = fetchManga("$baseUrl/comics/album/Various-Authors", page, "")
 
     override fun popularMangaRequest(page: Int): Request = throw UnsupportedOperationException()
     override fun popularMangaParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
     // Latest
 
-    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> = fetchManga("$baseUrl/comics/album/Various-Authors?sort=date", page, "date")
+    override suspend fun getLatestUpdates(page: Int): MangasPage = fetchManga("$baseUrl/comics/album/Various-Authors?sort=date", page, "date")
 
     override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
     override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
     // Search
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (page == 1) {
             pageStack.clear()
 
@@ -224,9 +225,12 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
             }
         }
 
-        return client.newCall(stackRequest())
-            .asObservableSuccess()
-            .map { response -> parseManga(response.asJsoup()) }
+        val response = client.newCall(stackRequest()).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+        return parseManga(response.asJsoup())
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw UnsupportedOperationException()

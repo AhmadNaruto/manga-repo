@@ -30,7 +30,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class Iken(
@@ -107,9 +106,9 @@ abstract class Iken(
 
     // search
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage {
         if (!query.startsWith("http")) {
-            return super.fetchSearchManga(page, query, filters)
+            return super.getSearchManga(page, query, filters)
         }
 
         val url = query.toHttpUrl()
@@ -126,8 +125,8 @@ abstract class Iken(
             this@apply.url = slug
         }
 
-        return fetchMangaDetails(manga)
-            .map { MangasPage(listOf(it), false) }
+        val mangaDetails = getMangaDetails(manga)
+        return MangasPage(listOf(mangaDetails), false)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
