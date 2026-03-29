@@ -16,6 +16,18 @@ android {
         resValues = false
         shaders = false
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
+    sourceSets {
+        named("test") {
+            manifest.srcFile("src/test/AndroidManifest.xml")
+        }
+    }
 }
 
 kotlin {
@@ -26,5 +38,11 @@ kotlin {
 }
 
 dependencies {
-    compileOnly(versionCatalogs.named("libs").findBundle("common").get())
+    compileOnly(libs.bundles.common)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlin.json)
+    testImplementation(libs.jsoup)
 }

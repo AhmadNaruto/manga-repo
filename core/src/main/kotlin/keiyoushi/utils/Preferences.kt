@@ -1,6 +1,7 @@
 package keiyoushi.utils
 
 import android.app.Application
+import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import eu.kanade.tachiyomi.source.online.HttpSource
 import uy.kohesive.injekt.Injekt
@@ -24,4 +25,4 @@ inline fun HttpSource.getPreferencesLazy(
  * Returns the [SharedPreferences] associated with passed source id
  */
 @Suppress("NOTHING_TO_INLINE")
-inline fun getPreferences(sourceId: Long): SharedPreferences = Injekt.get<Application>().getSharedPreferences("source_$sourceId", 0x0000)
+inline fun getPreferences(sourceId: Long): SharedPreferences = Injekt.get<Application>().getSharedPreferences("source_$sourceId", MODE_PRIVATE)

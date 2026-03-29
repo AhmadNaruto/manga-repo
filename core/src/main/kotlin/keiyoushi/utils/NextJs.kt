@@ -14,7 +14,15 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import kotlin.reflect.typeOf
 
+/**
+ * Regex to extract Next.js App Router flight data from inline scripts.
+ * Matches: self.__next_f.push([...]); or self.__next_f.push([...])
+ * Uses DOT_MATCHES_ALL to capture multi-line array content.
+ */
 private val NEXT_F_REGEX = Regex("""self\.__next_f\.push\(\s*(\[.*])\s*\)\s*;?\s*$""", RegexOption.DOT_MATCHES_ALL)
+
+/** Maximum RSC payload size to parse (10MB) - prevents ReDoS and memory exhaustion */
+private const val MAX_RSC_PAYLOAD_SIZE = 10 * 1024 * 1024
 
 private fun <T> extractValueNextJs(
     payload: JsonElement,
@@ -63,11 +71,15 @@ private fun Document.extractPagesRouterPayloads(): List<JsonElement> {
 }
 
 private fun extractRscPayloads(body: String): List<JsonElement> {
+    // Early return for empty or excessively large payloads to prevent ReDoS and memory issues
+    if (body.isEmpty() || body.length > MAX_RSC_PAYLOAD_SIZE) return emptyList()
+
     val results = mutableListOf<JsonElement>()
     var pos = 0
 
     while (pos < body.length) {
-        // Find next `<hex>:` chunk header
+        // Find next `<hex>:` chunk header (Next.js RSC flight format)
+        // Format: <hex_id>:<data> where data is either T<byteLen>,<binary> or JSON
         val colonIdx = body.indexOf(':', pos)
         if (colonIdx == -1) break
 
@@ -82,8 +94,8 @@ private fun extractRscPayloads(body: String): List<JsonElement> {
         if (pos >= body.length) break
 
         if (body[pos] == 'T') {
-            // Binary chunk: T<hexLen>,<content>
-            // byteLen is the UTF-8 byte length of the content, not the char count.
+            // Binary chunk format: T<hexLen>,<content>
+            // byteLen is the UTF-8 byte length of the content, not the character count
             pos++
             val commaIdx = body.indexOf(',', pos)
             if (commaIdx == -1) break
@@ -92,8 +104,9 @@ private fun extractRscPayloads(body: String): List<JsonElement> {
             var bytes = 0
             val start = pos
             while (pos < body.length && bytes < byteLen) {
-                // Count UTF-8 bytes per code point. Surrogate pairs (supplementary characters,
-                // e.g. emoji) occupy 4 UTF-8 bytes; we consume both surrogate chars in one step.
+                // Count UTF-8 bytes per code point
+                // Surrogate pairs (supplementary characters, e.g. emoji) occupy 4 UTF-8 bytes
+                // We consume both surrogate chars in one step
                 when {
                     body[pos].code < 0x80 -> bytes += 1
                     body[pos].code < 0x800 -> bytes += 2
@@ -109,7 +122,7 @@ private fun extractRscPayloads(body: String): List<JsonElement> {
                 results.add(jsonInstance.parseToJsonElement(body.substring(start, pos)))
             } catch (_: Exception) {}
         } else {
-            // JSON chunk — parse by bracket depth
+            // JSON chunk — parse by bracket depth to find complete JSON value
             val (element, end) = parseJsonAt(body, pos)
             if (element != null) results.add(element)
             pos = end
@@ -122,6 +135,10 @@ private fun extractRscPayloads(body: String): List<JsonElement> {
 /**
  * Attempts to parse a JSON value at [start] in [body], returning the parsed element
  * and the position immediately after the JSON value ends.
+ *
+ * Parses by tracking bracket/brace depth and string boundaries. Returns when a complete
+ * JSON object/array is found (depth returns to 0) or when whitespace is encountered at
+ * depth 0 (indicating end of a primitive value like null, true, false, or number).
  */
 private fun parseJsonAt(body: String, start: Int): Pair<JsonElement?, Int> {
     if (start >= body.length) return Pair(null, start)
@@ -156,6 +173,8 @@ private fun parseJsonAt(body: String, start: Int): Pair<JsonElement?, Int> {
                 }
             }
         }
+        // Whitespace at depth 0 indicates end of a primitive JSON value (null, true, false, number)
+        // This handles cases where JSON values are separated by whitespace in RSC flight format
         if (depth == 0 && c.isWhitespace()) {
             return try {
                 Pair(jsonInstance.parseToJsonElement(body.substring(start, i - 1)), i)
