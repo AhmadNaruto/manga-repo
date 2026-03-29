@@ -191,7 +191,11 @@ def get_module_list(ref: str) -> tuple[list[str], list[str]]:
 def get_all_modules() -> tuple[list[str], list[str]]:
     modules = []
     deleted = []
+    # Only build extensions from specific languages
+    ALLOWED_LANGS = {"id", "en", "all"}
     for lang in Path("src").iterdir():
+        if lang.name not in ALLOWED_LANGS:
+            continue
         for extension in lang.iterdir():
             modules.append(f":src:{lang.name}:{extension.name}")
             deleted.append(f"{lang.name}.{extension.name}")
