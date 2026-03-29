@@ -25,7 +25,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -39,7 +38,10 @@ abstract class MangaThemesia(
     val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
 ) : ParsedHttpSource() {
 
-    protected open val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    protected open val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     override val supportsLatest = true
 

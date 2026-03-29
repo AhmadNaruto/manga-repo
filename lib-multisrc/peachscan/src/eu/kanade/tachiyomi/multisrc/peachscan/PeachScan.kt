@@ -20,7 +20,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -42,7 +41,10 @@ abstract class PeachScan(
         .addInterceptor(ZipInterceptor()::zipImageInterceptor)
         .build()
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/todas-as-obras/", headers)
 

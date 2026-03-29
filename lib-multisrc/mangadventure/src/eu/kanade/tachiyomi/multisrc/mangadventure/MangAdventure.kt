@@ -14,7 +14,6 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 
-
 /** MangAdventure base source. */
 abstract class MangAdventure(
     override val name: String,
@@ -43,7 +42,10 @@ abstract class MangAdventure(
     private val apiUrl by lazy { "$baseUrl/api/v2" }
 
     /** The JSON parser of the class. */
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     override val versionId = 3
 

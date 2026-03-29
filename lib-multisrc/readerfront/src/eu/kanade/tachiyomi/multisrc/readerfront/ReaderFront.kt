@@ -20,7 +20,6 @@ import kotlinx.serialization.json.put
 import okhttp3.Request
 import okhttp3.Response
 
-
 abstract class ReaderFront(
     final override val name: String,
     final override val baseUrl: String,
@@ -28,7 +27,10 @@ abstract class ReaderFront(
 ) : HttpSource() {
     override val supportsLatest = true
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     private val i18n = ReaderFrontI18N(lang)
 

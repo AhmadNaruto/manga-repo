@@ -20,7 +20,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
-
 import java.net.URLEncoder
 
 abstract class MangaReader(
@@ -33,7 +32,10 @@ abstract class MangaReader(
 
     override val client = network.cloudflareClient
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     open fun addPage(page: Int, builder: HttpUrl.Builder) {
         builder.addQueryParameter("page", page.toString())

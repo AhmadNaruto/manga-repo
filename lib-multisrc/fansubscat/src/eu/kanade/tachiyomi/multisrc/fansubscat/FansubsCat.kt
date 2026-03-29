@@ -25,7 +25,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 
-
 abstract class FansubsCat(
     override val name: String,
     override val baseUrl: String,
@@ -41,7 +40,10 @@ abstract class FansubsCat(
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     private fun parseMangaFromJson(response: Response): MangasPage {
         val jsonObject = json.decodeFromString<JsonObject>(response.body.string())

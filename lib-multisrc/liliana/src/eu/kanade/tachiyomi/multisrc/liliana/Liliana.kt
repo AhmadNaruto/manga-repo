@@ -25,7 +25,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-
 import java.lang.Exception
 
 abstract class Liliana(
@@ -36,7 +35,10 @@ abstract class Liliana(
 ) : ParsedHttpSource() {
     override val supportsLatest = true
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     override val client = network.cloudflareClient
 

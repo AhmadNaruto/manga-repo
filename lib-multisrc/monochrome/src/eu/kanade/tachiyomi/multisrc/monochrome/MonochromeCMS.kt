@@ -23,7 +23,10 @@ open class MonochromeCMS(
         baseUrl.replaceFirst("://", "://api.")
     }
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     override fun headersBuilder() = Headers.Builder().set("Referer", "$baseUrl/")
 

@@ -48,8 +48,7 @@ class MangaCan :
         }
     }
 
-    private fun String.capitalizeWords(): String =
-        split(" ").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+    private fun String.capitalizeWords(): String = split(" ").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var selected = ""

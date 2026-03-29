@@ -604,7 +604,10 @@ abstract class GalleryAdults(
 
     protected open val thumbnailSelector = ".gallery_thumb"
 
-    private val jsonFormat = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val jsonFormat = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     protected open fun Element.getServer(): String {
         val domain = baseUrl.toHttpUrl().host
