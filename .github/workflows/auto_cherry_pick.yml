@@ -22,7 +22,7 @@ permissions:
 jobs:
   auto-merge:
     name: Auto cherry-pick Keiyoushi
-    if: github.repository == 'yuzono/tachiyomi-extensions'
+    #if: github.repository == 'yuzono/tachiyomi-extensions'
     runs-on: ubuntu-latest
 
     steps:
@@ -41,16 +41,16 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          git fetch origin keiyoushi
-          git checkout keiyoushi
+          git fetch origin yuzono
+          git checkout yuzono
           echo "Last commit: `git log -1 --oneline`"
-          git remote add keiyoushi-upstream https://github.com/keiyoushi/extensions-source
-          git fetch keiyoushi-upstream
-          echo "Last commit: `git log -1 --oneline keiyoushi-upstream/main`"
+          git remote add yuzono-upstream https://github.com/yuzono/tachiyomi-extensions
+          git fetch yuzono-upstream
+          echo "Last commit: `git log -1 --oneline yuzono/tachiyomi-extensions/master`"
 
           echo "Incoming commits:"
-          echo "`git log keiyoushi..keiyoushi-upstream/main --oneline`"
-          upcoming_changes=`git log keiyoushi..keiyoushi-upstream/main --pretty="%h"`
+          echo "`git log yuzono..yuzono-upstream/master --oneline`"
+          upcoming_changes=`git log yuzono..yuzono-upstream/master --pretty="%h"`
 
           # Read the upcoming changes' hash into an array
           upcoming_changes_hash=()
@@ -75,15 +75,15 @@ jobs:
 
           echo "LATEST_HASH=${latest_hash}" >> $GITHUB_ENV
 
-      - name: Merging keiyoushi-upstream to keiyoushi
+      - name: Merging yuzono-upstream to yuzono
         run: |
           cd master
-          git checkout keiyoushi
+          git checkout yuzono
           echo "Last commit: `git log -1 --oneline`"
           latest_commit_hash=${{ env.LATEST_HASH }}
           if [ ! -z "$latest_commit_hash" -a "$latest_commit_hash" != " " ]; then
-            echo "Merging commit '$latest_commit_hash' from 'keiyoushi-upstream' into keiyoushi"
-            git merge "$latest_commit_hash" --no-ff -m "Merge branch 'keiyoushi-upstream' into keiyoushi"
+            echo "Merging commit '$latest_commit_hash' from 'yuzono-upstream' into yuzono"
+            git merge "$latest_commit_hash" --no-ff -m "Merge branch 'yuzono-upstream' into yuzono"
           fi
 
           echo "Last commit: `git log -1 --oneline`"
@@ -112,9 +112,9 @@ jobs:
           echo "Last commit: `git log -1 --oneline`"
           echo "Pushing 'master' to repo"
           git push
-          git checkout keiyoushi
+          git checkout yuzono
           echo "Last commit: `git log -1 --oneline`"
-          echo "Pushing 'keiyoushi' to repo"
+          echo "Pushing 'yuzono' to repo"
           git push
           # git checkout merge-keiyoushi
           # echo "Last commit: `git log -1 --oneline`"
