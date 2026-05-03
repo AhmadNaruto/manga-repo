@@ -2,15 +2,16 @@ package eu.kanade.tachiyomi.extension.id.softkomik
 
 import kotlinx.serialization.Serializable
 
+// Use regular class instead of data class to reduce bytecode size
 @Serializable
-data class LibDataDto(
+class LibDataDto(
     val data: List<MangaDto>,
     val maxPage: Int,
     val page: Int,
 )
 
 @Serializable
-data class MangaDto(
+class MangaDto(
     val gambar: String,
     val title: String,
     val title_slug: String,
@@ -19,7 +20,7 @@ data class MangaDto(
 )
 
 @Serializable
-data class MangaDetailsDto(
+class MangaDetailsDto(
     val gambar: String,
     val title: String,
     val author: String? = null,
@@ -30,29 +31,29 @@ data class MangaDetailsDto(
 )
 
 @Serializable
-data class ChapterDto(
+class ChapterDto(
     val chapter: String,
 )
 
 @Serializable
-data class ChapterPageImagesDto(
+class ChapterPageImagesDto(
     val imageSrc: List<String>,
 )
 
 @Serializable
-data class ChapterPageDataDto(
+class ChapterPageDataDto(
     val _id: String,
     val imageSrc: List<String>,
     val storageInter2: Boolean? = false,
 )
 
 @Serializable
-data class ChapterListDto(
+class ChapterListDto(
     val chapter: List<ChapterDto>,
 )
 
 @Serializable
-data class SessionDto(
+class SessionDto(
     val ex: Long,
     val sign: String,
     val token: String,

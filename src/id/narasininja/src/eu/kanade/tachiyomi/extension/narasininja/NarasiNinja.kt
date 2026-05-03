@@ -87,6 +87,7 @@ class NarasiNinja : HttpSource() {
     }
 
     private fun filterParse(response: Response): MangasPage {
+        // Use parseAs for optimized JSON parsing
         val result = response.parseAs<FilterResponse>()
         return MangasPage(
             result.data.map { it.toSManga(baseUrl) },

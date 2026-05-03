@@ -2,6 +2,9 @@ package eu.kanade.tachiyomi.extension.id.ainzscansid
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import okhttp3.Dns // Added for IPv4 DNS
+import java.net.Inet4Address // Added for IPv4 DNS
+import java.net.InetAddress // Added for IPv4 DNS
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -26,8 +29,17 @@ class AinzScansID : HttpSource() {
 
     override val supportsLatest = true
 
+    // Enforce IPv4 connections by filtering DNS lookups
+    private val ipv4Dns by lazy {
+        Dns { hostname ->
+            Dns.SYSTEM.lookup(hostname).filter { it is Inet4Address }
+        }
+    }
+
+    // Standard client with Cloudflare support and rate limiting
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(3)
+        .dns(ipv4Dns) // Apply IPv4 DNS
         .build()
 
     private val apiUrl = "https://api.ainzscans01.com/api"
@@ -49,6 +61,7 @@ class AinzScansID : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
+        // Use keiyoushi.utils.parseAs for context-efficient stream parsing
         val dto = response.parseAs<SearchResponseDto>()
         val page = response.request.url.queryParameter("page")?.toIntOrNull() ?: 1
         return dto.toMangasPage(page)

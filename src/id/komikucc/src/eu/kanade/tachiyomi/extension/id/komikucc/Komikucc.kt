@@ -163,6 +163,7 @@ class Komikucc : HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val body = response.body.string().also { cacheGenres(it) }
+        // Use extractNextJsRsc for Next.js RSC data extraction
         val data = body.extractNextJsRsc<MangaList>()
 
         val mangas = data?.data.orEmpty().map { it.toSManga() }

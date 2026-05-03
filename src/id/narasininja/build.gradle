@@ -2,7 +2,7 @@ ext{
     extName = 'Narasi Ninja'
     extClass = '.NarasiNinja'
     baseUrl = 'https://narasininja.net'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = false
 }
 

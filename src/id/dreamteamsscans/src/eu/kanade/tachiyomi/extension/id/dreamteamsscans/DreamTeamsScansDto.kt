@@ -8,18 +8,19 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
+// Use regular class instead of data class to reduce bytecode size
 @Serializable
-data class MangaListDto(
+class MangaListDto(
     val data: List<MangaDto>,
     val page: Int,
     val total_pages: Int,
 )
 
 @Serializable
-data class MangaDto(
-    val title: String,
-    val slug: String,
-    val poster_image_url: String? = null,
+class MangaDto(
+    private val title: String,
+    private val slug: String,
+    private val poster_image_url: String? = null,
 ) {
     fun toSManga() = SManga.create().apply {
         title = this@MangaDto.title
@@ -29,16 +30,16 @@ data class MangaDto(
 }
 
 @Serializable
-data class MangaDetailsDto(
+class MangaDetailsDto(
     val title: String,
     val slug: String,
-    val synopsis: String? = null,
-    val poster_image_url: String? = null,
-    val author_name: String? = null,
-    val artist_name: String? = null,
-    val comic_status: String? = null,
-    val primary_genre: String? = null,
-    val genres: List<GenreDto> = emptyList(),
+    private val synopsis: String? = null,
+    private val poster_image_url: String? = null,
+    private val author_name: String? = null,
+    private val artist_name: String? = null,
+    private val comic_status: String? = null,
+    private val primary_genre: String? = null,
+    private val genres: List<GenreDto> = emptyList(),
     val units: List<ChapterDto> = emptyList(),
 ) {
     fun toSManga() = SManga.create().apply {
@@ -60,16 +61,16 @@ data class MangaDetailsDto(
 }
 
 @Serializable
-data class GenreDto(
+class GenreDto(
     val name: String,
 )
 
 @Serializable
-data class ChapterDto(
+class ChapterDto(
     val number: String,
     val slug: String,
-    val title: String? = null,
-    val created_at: String? = null,
+    private val title: String? = null,
+    private val created_at: String? = null,
 ) {
     fun toSChapter(mangaUrl: String) = SChapter.create().apply {
         url = "/comic/$mangaUrl/chapter/$slug"
@@ -85,17 +86,17 @@ data class ChapterDto(
 }
 
 @Serializable
-data class PageListDto(
+class PageListDto(
     val chapter: ChapterPageDto,
 )
 
 @Serializable
-data class ChapterPageDto(
+class ChapterPageDto(
     val pages: List<PageDto>,
 )
 
 @Serializable
-data class PageDto(
+class PageDto(
     val page_number: Int,
     val image_url: String,
 )

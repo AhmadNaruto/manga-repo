@@ -29,6 +29,7 @@ class Pramramadhan : HttpSource() {
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/search.php?sort=popular&page=$page", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
+        // Standard HTML parsing for popular manga
         val document = response.asJsoup()
         val mangas = document.select("a.result-card").map { element ->
             SManga.create().apply {

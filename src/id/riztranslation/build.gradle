@@ -1,7 +1,7 @@
 ext {
     extName = 'Riztranslation'
     extClass = '.Riztranslation'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = false
 }
 

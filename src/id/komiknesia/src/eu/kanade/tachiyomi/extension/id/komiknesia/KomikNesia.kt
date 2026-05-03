@@ -84,6 +84,7 @@ class KomikNesia : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
+        // Use keiyoushi.utils.parseAs for context-efficient stream parsing
         val payload = response.parseAs<PayloadDto<List<MangaDto>>>()
         val mangas = payload.data.map { it.toSManga() }
         val hasNextPage = payload.meta?.let { it.page < it.totalPages } ?: false

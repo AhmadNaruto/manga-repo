@@ -84,6 +84,7 @@ class DoujinDesuUnoriginal : HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val page = response.request.url.queryParameter("page")?.toInt() ?: 1
+        // Use keiyoushi.utils.extractNextJs for optimized Next.js data extraction
         val data = response.extractNextJs<MangaList>()
 
         val mangas = data?.mangas.orEmpty().map { it.toSManga() }

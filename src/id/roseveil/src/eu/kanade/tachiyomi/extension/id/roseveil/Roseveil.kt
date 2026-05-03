@@ -185,6 +185,7 @@ class Roseveil : HttpSource() {
 
     // =============================== Utilities ====================================
     private fun parseMangaPage(response: Response): MangasPage {
+        // Use parseAs for optimized JSON parsing
         val data = response.parseAs<SearchResponseDto>()
         val mangas = data.data.map { item ->
             SManga.create().apply {

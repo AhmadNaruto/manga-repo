@@ -2,9 +2,10 @@ package eu.kanade.tachiyomi.extension.id.mangkomik
 
 import kotlinx.serialization.Serializable
 
+// Use regular class instead of data class to reduce bytecode size
 @Serializable
-data class SirenKomikDto(
-    val `data`: DataWrapper,
+class SirenKomikDto(
+    private val data: DataWrapper,
 ) {
     val pages: List<String>
         get() = data.data.sources

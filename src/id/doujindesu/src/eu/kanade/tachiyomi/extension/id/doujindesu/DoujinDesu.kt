@@ -42,6 +42,7 @@ class DoujinDesu :
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
 
+    // Use getPreferencesLazy for better performance
     private val preferences: SharedPreferences by getPreferencesLazy()
 
     private val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id"))

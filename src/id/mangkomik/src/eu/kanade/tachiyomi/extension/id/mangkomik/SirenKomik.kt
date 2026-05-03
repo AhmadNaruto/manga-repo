@@ -4,7 +4,7 @@ import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
-import kotlinx.serialization.json.decodeFromStream
+import keiyoushi.utils.parseAs
 import okhttp3.FormBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -55,9 +55,8 @@ class SirenKomik :
             throw IOException("Pages not found")
         }
 
-        val dto = response.use {
-            json.decodeFromStream<SirenKomikDto>(it.body.byteStream())
-        }
+        // Use keiyoushi.utils.parseAs for context-efficient JSON parsing from response body stream
+        val dto = response.parseAs<SirenKomikDto>(json)
 
         return dto.pages.mapIndexed { index, imageUrl ->
             Page(index, document.location(), imageUrl)

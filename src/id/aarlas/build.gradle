@@ -3,7 +3,7 @@ ext {
     extClass = '.Aarlas'
     themePkg = 'zeistmanga'
     baseUrl = 'https://www.arlas.my.id'
-    overrideVersionCode = 1
+    overrideVersionCode = 2 // Enforce IPv4 connection
     isNsfw = true
 }
 

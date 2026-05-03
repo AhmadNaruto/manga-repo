@@ -1,7 +1,7 @@
 ext {
     extName = 'BacaKomik'
     extClass = '.BacaKomik'
-    extVersionCode = 14
+    extVersionCode = 16 // Incremented for IPv4 enforcement
     isNsfw = false
 }
 

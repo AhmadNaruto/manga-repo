@@ -47,6 +47,7 @@ class Riztranslation : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
+        // Use parseAs for context-efficient stream parsing from Supabase API
         val books = response.parseAs<List<BookDto>>()
         val hasNextPage = books.size == 20
 

@@ -1,7 +1,7 @@
 ext {
     extName = 'West Manga'
     extClass = '.WestManga'
-    extVersionCode = 41
+    extVersionCode = 43 // Enforce IPv4 connection
     isNsfw = false
 }
 

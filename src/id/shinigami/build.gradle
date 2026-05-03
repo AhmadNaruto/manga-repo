@@ -1,7 +1,7 @@
 ext {
     extName = 'Shinigami'
     extClass = '.Shinigami'
-    extVersionCode = 77
+    extVersionCode = 79 // Enforce IPv4 connection
 }
 
 apply from: "$rootDir/common.gradle"

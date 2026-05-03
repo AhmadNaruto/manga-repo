@@ -71,6 +71,7 @@ class Komiku : HttpSource() {
     override fun mangaDetailsRequest(manga: SManga): Request = GET(baseUrl + manga.url, headers)
 
     override fun mangaDetailsParse(response: Response): SManga {
+        // Standard HTML parsing for manga details
         val document = response.asJsoup()
         return SManga.create().apply {
             description = buildString {

@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.extension.id.bacami
 
+import okhttp3.Dns
+import java.net.Inet4Address
+import java.net.InetAddress
+
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -26,7 +30,16 @@ class Bacami : HttpSource() {
     override val lang = "id"
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient
+    // Force IPv4 connections
+    private val ipv4Dns by lazy {
+        Dns { hostname ->
+            Dns.SYSTEM.lookup(hostname).filter { it is Inet4Address }
+        }
+    }
+
+    override val client = network.cloudflareClient.newBuilder()
+        .dns(ipv4Dns)
+        .build()
 
     private val dateFormat = SimpleDateFormat("dd MMMM, yyyy", Locale.ENGLISH)
 
@@ -137,6 +150,7 @@ class Bacami : HttpSource() {
             ?: return emptyList()
 
         val jsonString = scriptContent.substringAfter("imageUrls:").substringBefore("],").plus("]")
+        // Use keiyoushi.utils.parseAs for optimized JSON parsing
         val imageUrls = jsonString.parseAs<List<String>>()
         return imageUrls.mapIndexed { index, url ->
             Page(index, imageUrl = url)

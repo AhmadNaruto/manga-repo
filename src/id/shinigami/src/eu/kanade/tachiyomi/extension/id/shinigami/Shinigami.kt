@@ -16,6 +16,16 @@ import okhttp3.Request
 import okhttp3.Response
 import java.text.SimpleDateFormat
 import java.util.Locale
+import okhttp3.Dns
+import java.net.Inet4Address
+import java.net.InetAddress
+
+private val ipv4Dns by lazy {
+    Dns { hostname ->
+        // Enforce IPv4-only connections by filtering DNS lookups.
+        Dns.SYSTEM.lookup(hostname).filter { it is Inet4Address }
+    }
+}
 
 class Shinigami : HttpSource() {
     // moved from Reaper Scans (id) to Shinigami (id)
@@ -45,6 +55,7 @@ class Shinigami : HttpSource() {
             chain.proceed(request.newBuilder().headers(headers).build())
         }
         .rateLimit(3)
+        .dns(ipv4Dns)
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -72,6 +83,7 @@ class Shinigami : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
+        // Use parseAs for context-efficient stream parsing
         val rootObject = response.parseAs<ShinigamiBrowseDto>()
         val projectList = rootObject.data.map(::popularMangaFromObject)
 

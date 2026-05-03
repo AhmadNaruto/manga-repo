@@ -8,13 +8,23 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
+import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import java.net.Inet4Address
+import java.net.InetAddress
 import org.jsoup.Jsoup
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+
+private val ipv4Dns by lazy {
+    Dns { hostname ->
+        // Enforce IPv4-only connections by filtering DNS lookups.
+        Dns.SYSTEM.lookup(hostname).filter { it is Inet4Address }
+    }
+}
 
 class WestManga : HttpSource() {
     override val name = "West Manga"
@@ -24,7 +34,9 @@ class WestManga : HttpSource() {
     override val id = 8883916630998758688
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient
+    override val client = network.cloudflareClient.newBuilder()
+        .dns(ipv4Dns)
+        .build()
 
     override fun headersBuilder() = super.headersBuilder()
         .set("Referer", "$baseUrl/")
@@ -64,6 +76,7 @@ class WestManga : HttpSource() {
     )
 
     override fun searchMangaParse(response: Response): MangasPage {
+        // Use parseAs for context-efficient stream parsing
         val data = response.parseAs<PaginatedData<BrowseManga>>()
 
         val entries = data.data.map {

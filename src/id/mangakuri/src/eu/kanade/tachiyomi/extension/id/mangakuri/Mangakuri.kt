@@ -52,6 +52,7 @@ class Mangakuri : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
+        // Use parseAs for context-efficient stream parsing
         val dto = response.parseAs<SearchResponseDto>()
         val mangas = dto.data.map { manga ->
             SManga.create().apply {

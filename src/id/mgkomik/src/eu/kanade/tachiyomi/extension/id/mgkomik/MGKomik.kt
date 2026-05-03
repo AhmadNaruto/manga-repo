@@ -6,6 +6,8 @@ import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.Interceptor
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -32,16 +34,19 @@ class MGKomik :
     }
 
     override val client = network.cloudflareClient.newBuilder()
-        .addInterceptor { chain ->
-            val request = chain.request()
-            val headers = request.headers.newBuilder().apply {
-                removeAll("X-Requested-With")
-            }.build()
-
-            chain.proceed(request.newBuilder().headers(headers).build())
-        }
+        .addInterceptor(::mgkomikInterceptor)
         .rateLimit(9, 2)
         .build()
+
+    // Using a private function for interceptor to avoid internal compiler error
+    private fun mgkomikInterceptor(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        val headers = request.headers.newBuilder().apply {
+            removeAll("X-Requested-With")
+        }.build()
+
+        return chain.proceed(request.newBuilder().headers(headers).build())
+    }
 
     // ================================== Popular ======================================
 

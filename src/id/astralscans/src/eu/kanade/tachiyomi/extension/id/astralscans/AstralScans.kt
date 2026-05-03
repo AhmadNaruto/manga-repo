@@ -5,15 +5,31 @@ import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.Dns // Added for IPv4 DNS
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import java.net.Inet4Address // Added for IPv4 DNS
+import java.net.InetAddress // Added for IPv4 DNS
 
 class AstralScans : MangaThemesia("Astral Scans", "https://astralscans.top", "id") {
 
     override val hasProjectPage = true
+
+    // Enforce IPv4 connections by filtering DNS lookups
+    private val ipv4Dns by lazy {
+        Dns { hostname ->
+            Dns.SYSTEM.lookup(hostname).filter { it is Inet4Address }
+        }
+    }
+
+    override val client = network.cloudflareClient.newBuilder()
+        .rateLimit(3)
+        .dns(ipv4Dns) // Apply IPv4 DNS
+        .build()
 
     override fun chapterListRequest(manga: SManga): Request {
         val body = MultipartBody.Builder()

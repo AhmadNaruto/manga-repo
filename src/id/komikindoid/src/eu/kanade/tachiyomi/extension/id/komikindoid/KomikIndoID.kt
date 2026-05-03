@@ -199,6 +199,7 @@ class KomikIndoID : HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
+        // Extracting image URLs from landmine div
         return document.select("div.img-landmine img")
             .map { it.attr("onError").substringAfter("src='").substringBefore("';") }
             .filter { it.isNotEmpty() }

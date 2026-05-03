@@ -4,8 +4,8 @@ import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.util.asJsoup
+import keiyoushi.utils.parseAs
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import okhttp3.Cookie
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -35,6 +35,7 @@ class Mangasusu :
             val clearHeaders = request.headers.newBuilder().removeAll("Cookie").build()
             chain.proceed(request.newBuilder().headers(clearHeaders).build())
         }
+
         if (response.headers["x-sucuri-cache"].isNullOrEmpty() && response.headers["x-sucuri-id"] != null && url.toString().startsWith(baseUrl)) {
             val script = response.use { it.asJsoup() }.selectFirst("script")?.data()
 
@@ -61,19 +62,20 @@ class Mangasusu :
         val scriptContent = document.selectFirst("script:containsData(ts_reader)")?.data()
             ?: return super.pageListParse(document)
         val jsonString = scriptContent.substringAfter("ts_reader.run(").substringBefore(");")
-        val tsReader = json.decodeFromString<TSReader>(jsonString)
+        // Use keiyoushi.utils.parseAs for context-efficient JSON parsing
+        val tsReader = jsonString.parseAs<TSReader>(json)
         val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()
         return imageUrls.mapIndexed { index, imageUrl -> Page(index, document.location(), imageUrl) }
     }
 
+    // Use regular class instead of data class to reduce bytecode size
     @Serializable
-    data class TSReader(
+    private class TSReader(
         val sources: List<ReaderImageSource>,
     )
 
     @Serializable
-    data class ReaderImageSource(
-        val source: String,
+    private class ReaderImageSource(
         val images: List<String>,
     )
 }

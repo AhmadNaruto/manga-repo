@@ -9,20 +9,21 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// Use regular class instead of data class to reduce bytecode size
 @Serializable
-data class SeriesListResponse(
+class SeriesListResponse(
     val data: List<SeriesItem>,
     val meta: Meta? = null,
 )
 
 @Serializable
-data class SeriesItem(
+class SeriesItem(
     val id: Int,
     val data: SeriesData,
 )
 
 @Serializable
-data class SeriesData(
+class SeriesData(
     val slug: String?,
     val title: String,
     val author: String? = null,
@@ -33,28 +34,28 @@ data class SeriesData(
 )
 
 @Serializable
-data class GenreData(
+class GenreData(
     val data: GenreInfo,
 )
 
 @Serializable
-data class GenreInfo(
+class GenreInfo(
     val name: String,
 )
 
 @Serializable
-data class Meta(
+class Meta(
     val page: Int? = null,
     @SerialName("lastPage") val lastPage: Int? = null,
 )
 
 @Serializable
-data class SeriesDetailResponse(
+class SeriesDetailResponse(
     val data: SeriesItem,
 )
 
 @Serializable
-data class ChapterItem(
+class ChapterItem(
     val data: ChapterData,
     val createdAt: String? = null,
     val updatedAt: String? = null,
@@ -62,19 +63,19 @@ data class ChapterItem(
 )
 
 @Serializable
-data class ChapterData(
+class ChapterData(
     val index: Float? = null,
     val title: String? = null,
     val images: List<String>? = null,
 )
 
 @Serializable
-data class ChapterListResponse(
+class ChapterListResponse(
     val data: List<ChapterItem>,
 )
 
 @Serializable
-data class ChapterDetailResponse(
+class ChapterDetailResponse(
     val data: ChapterItem,
 )
 

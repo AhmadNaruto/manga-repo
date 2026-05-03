@@ -14,21 +14,24 @@ class Komiktap : MangaThemesia("Komiktap", "https://komiktap.info", "id") {
 
     override val client = super.client.newBuilder()
         .addInterceptor(::sucuriInterceptor)
-        .addInterceptor { chain ->
-            val response = chain.proceed(chain.request())
-            val mime = response.headers["Content-Type"]
-            if (response.isSuccessful) {
-                if (mime != "application/octet-stream") {
-                    return@addInterceptor response
-                }
-                // Fix image content type
-                val type = IMG_CONTENT_TYPE.toMediaType()
-                val body = response.body.source().asResponseBody(type)
-                return@addInterceptor response.newBuilder().body(body).build()
-            }
-            response
-        }
+        .addInterceptor(::contentTypeInterceptor)
         .build()
+
+    // Using a private function for interceptor to avoid internal compiler error
+    private fun contentTypeInterceptor(chain: Interceptor.Chain): Response {
+        val response = chain.proceed(chain.request())
+        val mime = response.headers["Content-Type"]
+        if (response.isSuccessful) {
+            if (mime != "application/octet-stream") {
+                return response
+            }
+            // Fix image content type
+            val type = IMG_CONTENT_TYPE.toMediaType()
+            val body = response.body.source().asResponseBody(type)
+            return response.newBuilder().body(body).build()
+        }
+        return response
+    }
 
     // Taken from es/ManhwasNet
     private fun sucuriInterceptor(chain: Interceptor.Chain): Response {

@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.extension.id.bacakomik
 
+import okhttp3.Dns
+import java.net.Inet4Address
+import java.net.InetAddress
+
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
@@ -27,16 +31,24 @@ class BacaKomik : HttpSource() {
     override val supportsLatest = true
 
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    // Added IPv4 DNS configuration
+    private val ipv4Dns by lazy {
+        Dns { hostname ->
+            Dns.SYSTEM.lookup(hostname).filter { it is Inet4Address }
+        }
+    }
+
     private val chapterRegex = Regex("""Chapter\s([0-9]+)""")
 
     override val id = 4383360263234319058
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(12, 3)
-        .build()
-
+            .dns(ipv4Dns) // Added DNS configuration
+            .build()
     private fun pagePath(page: Int) = if (page > 1) "page/$page/" else ""
 
+    // ============================== Popular ===============================
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/daftar-komik/${pagePath(page)}?order=popular", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -46,6 +58,7 @@ class BacaKomik : HttpSource() {
         return MangasPage(mangas, hasNextPage)
     }
 
+    // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/daftar-komik/${pagePath(page)}?order=update", headers)
 
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)

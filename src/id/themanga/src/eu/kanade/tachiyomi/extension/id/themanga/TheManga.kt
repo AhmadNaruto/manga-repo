@@ -11,12 +11,20 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import keiyoushi.utils.tryParse
+import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
+
+private val ipv4Dns by lazy {
+    Dns { hostname ->
+        // Enforce IPv4-only connections by filtering DNS lookups.
+        Dns.SYSTEM.lookup(hostname).filter { it is Inet4Address }
+    }
+}
 
 // Madara to HttpSource
 class TheManga : HttpSource() {
@@ -28,6 +36,7 @@ class TheManga : HttpSource() {
 
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
+        .dns(ipv4Dns)
         .build()
 
     // =============================== Popular ================================
@@ -53,6 +62,7 @@ class TheManga : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
+        // Standard HTML parsing for search results
         val document = response.asJsoup()
 
         val mangas = document.select("a.card").map { element ->
