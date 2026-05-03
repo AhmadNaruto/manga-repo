@@ -64,7 +64,7 @@ class Intl(
 
     fun languageDisplayName(localeCode: String): String = Locale.forLanguageTag(localeCode)
         .getDisplayName(locale)
-        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
+        .replaceFirstChar { char: Char -> if (char.isLowerCase()) char.titlecase(locale) else char.toString() }
 
     /**
      * Creates a [PropertyResourceBundle] instance from the language specified.
