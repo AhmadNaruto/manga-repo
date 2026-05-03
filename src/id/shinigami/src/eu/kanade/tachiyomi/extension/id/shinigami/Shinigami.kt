@@ -10,15 +10,14 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.tryParse
+import okhttp3.Dns
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import java.net.Inet4Address
 import java.text.SimpleDateFormat
 import java.util.Locale
-import okhttp3.Dns
-import java.net.Inet4Address
-import java.net.InetAddress
 
 private val ipv4Dns by lazy {
     Dns { hostname ->

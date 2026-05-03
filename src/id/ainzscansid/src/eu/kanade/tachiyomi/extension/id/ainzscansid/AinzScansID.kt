@@ -2,9 +2,6 @@ package eu.kanade.tachiyomi.extension.id.ainzscansid
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import okhttp3.Dns // Added for IPv4 DNS
-import java.net.Inet4Address // Added for IPv4 DNS
-import java.net.InetAddress // Added for IPv4 DNS
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -12,9 +9,11 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
+import okhttp3.Dns // Added for IPv4 DNS
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import java.net.Inet4Address // Added for IPv4 DNS
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone

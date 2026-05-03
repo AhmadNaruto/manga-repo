@@ -6,14 +6,12 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Dns // Added for IPv4 DNS
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.net.Inet4Address // Added for IPv4 DNS
-import java.net.InetAddress // Added for IPv4 DNS
 
 class AstralScans : MangaThemesia("Astral Scans", "https://astralscans.top", "id") {
 

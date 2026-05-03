@@ -1,9 +1,5 @@
 package eu.kanade.tachiyomi.extension.id.bacakomik
 
-import okhttp3.Dns
-import java.net.Inet4Address
-import java.net.InetAddress
-
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
@@ -15,11 +11,13 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import keiyoushi.utils.tryParse
+import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
+import java.net.Inet4Address
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -31,6 +29,7 @@ class BacaKomik : HttpSource() {
     override val supportsLatest = true
 
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+
     // Added IPv4 DNS configuration
     private val ipv4Dns by lazy {
         Dns { hostname ->
@@ -44,8 +43,8 @@ class BacaKomik : HttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(12, 3)
-            .dns(ipv4Dns) // Added DNS configuration
-            .build()
+        .dns(ipv4Dns) // Added DNS configuration
+        .build()
     private fun pagePath(page: Int) = if (page > 1) "page/$page/" else ""
 
     // ============================== Popular ===============================

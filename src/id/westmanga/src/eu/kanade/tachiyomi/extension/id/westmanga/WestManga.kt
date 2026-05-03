@@ -13,9 +13,8 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import java.net.Inet4Address
-import java.net.InetAddress
 import org.jsoup.Jsoup
+import java.net.Inet4Address
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 

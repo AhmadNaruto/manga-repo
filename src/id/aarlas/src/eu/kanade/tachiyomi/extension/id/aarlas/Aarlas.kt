@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.extension.id.aarlas
 import eu.kanade.tachiyomi.multisrc.zeistmanga.ZeistManga
 import okhttp3.Dns
 import java.net.Inet4Address
-import java.net.InetAddress
 
 class Aarlas : ZeistManga("Aarlas", "https://www.arlas.my.id", "id") {
 
