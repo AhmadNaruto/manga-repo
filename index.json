@@ -100,6 +100,24 @@
     ]
   },
   {
+    "name": "Tachiyomi: Coomer",
+    "pkg": "eu.kanade.tachiyomi.extension.all.coomer",
+    "apk": "tachiyomi-all.coomer-v1.4.23.apk",
+    "lang": "all",
+    "code": 23,
+    "version": "1.4.23",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Coomer",
+        "lang": "all",
+        "id": "8715899195746116471",
+        "baseUrl": "https://coomer.st",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: Everia.club",
     "pkg": "eu.kanade.tachiyomi.extension.all.everiaclub",
     "apk": "tachiyomi-all.everiaclub-v1.4.12.apk",
@@ -196,6 +214,227 @@
     ]
   },
   {
+    "name": "Tachiyomi: 3Hentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.hentai3",
+    "apk": "tachiyomi-all.hentai3-v1.4.5.apk",
+    "lang": "all",
+    "code": 5,
+    "version": "1.4.5",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "3Hentai",
+        "lang": "all",
+        "id": "6915411826598362561",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "en",
+        "id": "7819216870104067677",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "ja",
+        "id": "2859097949969075077",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "ko",
+        "id": "1633661983859923604",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "zh",
+        "id": "6260479722543828095",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "es",
+        "id": "373755159908438683",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "ru",
+        "id": "4917651850397277037",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "pt",
+        "id": "1132983959765816866",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "fr",
+        "id": "4290439286788644779",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "th",
+        "id": "3039466073711396152",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "it",
+        "id": "419728421305339582",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "vi",
+        "id": "6096870058125388335",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "ar",
+        "id": "1533969146563051444",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "mo",
+        "id": "8615096170305162493",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "id",
+        "id": "49558592523574241",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "jv",
+        "id": "7615826761003926053",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "tl",
+        "id": "3940534831604021485",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "my",
+        "id": "3523364768003208635",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "tr",
+        "id": "359674482170560410",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "uk",
+        "id": "3501213105339612791",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "pl",
+        "id": "7940950215101782907",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "fi",
+        "id": "685390685036083849",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "de",
+        "id": "7057309244033446342",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "nl",
+        "id": "7640863230103182507",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "cs",
+        "id": "3862668659803323645",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "hu",
+        "id": "8643172240389130297",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "bg",
+        "id": "2158865776377405902",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "is",
+        "id": "8884989104958593922",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "la",
+        "id": "5003216810967182175",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      },
+      {
+        "name": "3Hentai",
+        "lang": "ceb",
+        "id": "8630005846383434774",
+        "baseUrl": "https://3hentai.net",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: HentaiEra",
     "pkg": "eu.kanade.tachiyomi.extension.all.hentaiera",
     "apk": "tachiyomi-all.hentaiera-v1.4.10.apk",
@@ -258,6 +497,24 @@
         "lang": "all",
         "id": "5238899243957092391",
         "baseUrl": "https://hentaiera.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Kemono",
+    "pkg": "eu.kanade.tachiyomi.extension.all.kemono",
+    "apk": "tachiyomi-all.kemono-v1.4.24.apk",
+    "lang": "all",
+    "code": 24,
+    "version": "1.4.24",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Kemono",
+        "lang": "all",
+        "id": "2011050813940802605",
+        "baseUrl": "https://kemono.cr",
         "versionId": 1
       }
     ]
@@ -507,6 +764,24 @@
     ]
   },
   {
+    "name": "Tachiyomi: Project Suki",
+    "pkg": "eu.kanade.tachiyomi.extension.all.projectsuki",
+    "apk": "tachiyomi-all.projectsuki-v1.4.6.apk",
+    "lang": "all",
+    "code": 6,
+    "version": "1.4.6",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Project Suki",
+        "lang": "all",
+        "id": "8965918600406781666",
+        "baseUrl": "https://projectsuki.com/",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: The Library of Ohara",
     "pkg": "eu.kanade.tachiyomi.extension.all.thelibraryofohara",
     "apk": "tachiyomi-all.thelibraryofohara-v1.4.2.apk",
@@ -580,6 +855,24 @@
         "lang": "es",
         "id": "2264075849201286666",
         "baseUrl": "https://ccc.vinnieveritas.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Xiutaku",
+    "pkg": "eu.kanade.tachiyomi.extension.all.xiutaku",
+    "apk": "tachiyomi-all.xiutaku-v1.4.3.apk",
+    "lang": "all",
+    "code": 3,
+    "version": "1.4.3",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Xiutaku",
+        "lang": "all",
+        "id": "6520733892888572506",
+        "baseUrl": "https://xiutaku.com",
         "versionId": 1
       }
     ]
@@ -940,6 +1233,24 @@
         "lang": "en",
         "id": "7719798645438596394",
         "baseUrl": "https://hentainexus.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Hiperdex",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hiperdex",
+    "apk": "tachiyomi-en.hiperdex-v1.4.77.apk",
+    "lang": "en",
+    "code": 77,
+    "version": "1.4.77",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Hiperdex",
+        "lang": "en",
+        "id": "3064755045370217842",
+        "baseUrl": "https://hiperdex.com",
         "versionId": 1
       }
     ]
@@ -1719,6 +2030,24 @@
     ]
   },
   {
+    "name": "Tachiyomi: ReadComicOnline",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readcomiconline",
+    "apk": "tachiyomi-en.readcomiconline-v1.4.41.apk",
+    "lang": "en",
+    "code": 41,
+    "version": "1.4.41",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "ReadComicOnline",
+        "lang": "en",
+        "id": "8061953015808280611",
+        "baseUrl": "https://readcomiconline.li",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: Read Dragon Ball Super Chou Manga Online",
     "pkg": "eu.kanade.tachiyomi.extension.en.readdragonballsuperchoumangaonline",
     "apk": "tachiyomi-en.readdragonballsuperchoumangaonline-v1.4.7.apk",
@@ -1917,6 +2246,24 @@
     ]
   },
   {
+    "name": "Tachiyomi: Temple Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.en.templescan",
+    "apk": "tachiyomi-en.templescan-v1.4.48.apk",
+    "lang": "en",
+    "code": 48,
+    "version": "1.4.48",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Temple Scan",
+        "lang": "en",
+        "id": "4210732525216763379",
+        "baseUrl": "https://templetoons.com",
+        "versionId": 3
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: TodayManga",
     "pkg": "eu.kanade.tachiyomi.extension.en.todaymanga",
     "apk": "tachiyomi-en.todaymanga-v1.4.2.apk",
@@ -1930,6 +2277,24 @@
         "lang": "en",
         "id": "1147556681248758139",
         "baseUrl": "https://todaymanga.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Webcomics",
+    "pkg": "eu.kanade.tachiyomi.extension.en.webcomics",
+    "apk": "tachiyomi-en.webcomics-v1.4.9.apk",
+    "lang": "en",
+    "code": 9,
+    "version": "1.4.9",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Webcomics",
+        "lang": "en",
+        "id": "7547950838983208237",
+        "baseUrl": "https://webcomicsapp.com",
         "versionId": 1
       }
     ]
@@ -2169,12 +2534,30 @@
     ]
   },
   {
+    "name": "Tachiyomi: LectorManga.lat",
+    "pkg": "eu.kanade.tachiyomi.extension.es.lectormangalat",
+    "apk": "tachiyomi-es.lectormangalat-v1.4.49.apk",
+    "lang": "es",
+    "code": 49,
+    "version": "1.4.49",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "LectorManga.lat",
+        "lang": "es",
+        "id": "3701714196729780447",
+        "baseUrl": "https://lectormangaa.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: LeerCapitulo",
     "pkg": "eu.kanade.tachiyomi.extension.es.leercapitulo",
-    "apk": "tachiyomi-es.leercapitulo-v1.4.15.apk",
+    "apk": "tachiyomi-es.leercapitulo-v1.4.16.apk",
     "lang": "es",
-    "code": 15,
-    "version": "1.4.15",
+    "code": 16,
+    "version": "1.4.16",
     "nsfw": 0,
     "sources": [
       {
@@ -2182,6 +2565,24 @@
         "lang": "es",
         "id": "5621901596522308538",
         "baseUrl": "https://www.leercapitulo.co",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Manga Crab",
+    "pkg": "eu.kanade.tachiyomi.extension.es.mangacrab",
+    "apk": "tachiyomi-es.mangacrab-v1.4.68.apk",
+    "lang": "es",
+    "code": 68,
+    "version": "1.4.68",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Manga Crab",
+        "lang": "es",
+        "id": "6167683270485370369",
+        "baseUrl": "https://mangacrab.org",
         "versionId": 1
       }
     ]
@@ -2200,6 +2601,42 @@
         "lang": "es",
         "id": "2202687009511923782",
         "baseUrl": "https://manga-oni.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Mangas.in",
+    "pkg": "eu.kanade.tachiyomi.extension.es.mangasin",
+    "apk": "tachiyomi-es.mangasin-v1.4.18.apk",
+    "lang": "es",
+    "code": 18,
+    "version": "1.4.18",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Mangas.in",
+        "lang": "es",
+        "id": "3344386250058668105",
+        "baseUrl": "https://m440.in",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Mangas No Sekai",
+    "pkg": "eu.kanade.tachiyomi.extension.es.mangasnosekai",
+    "apk": "tachiyomi-es.mangasnosekai-v1.4.64.apk",
+    "lang": "es",
+    "code": 64,
+    "version": "1.4.64",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Mangas No Sekai",
+        "lang": "es",
+        "id": "829053423099062956",
+        "baseUrl": "https://mangasnosekai.com",
         "versionId": 1
       }
     ]
@@ -2439,6 +2876,24 @@
     ]
   },
   {
+    "name": "Tachiyomi: Sushi-Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.sushiscan",
+    "apk": "tachiyomi-fr.sushiscan-v1.4.46.apk",
+    "lang": "fr",
+    "code": 46,
+    "version": "1.4.46",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Sushi-Scan",
+        "lang": "fr",
+        "id": "6516188872647980679",
+        "baseUrl": "https://sushiscan.net",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: BacaKomik",
     "pkg": "eu.kanade.tachiyomi.extension.id.bacakomik",
     "apk": "tachiyomi-id.bacakomik-v1.4.14.apk",
@@ -2470,6 +2925,24 @@
         "lang": "id",
         "id": "2677079941490683989",
         "baseUrl": "https://bacami.net",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: CosmicScans.id",
+    "pkg": "eu.kanade.tachiyomi.extension.id.cosmicscansid",
+    "apk": "tachiyomi-id.cosmicscansid-v1.4.50.apk",
+    "lang": "id",
+    "code": 50,
+    "version": "1.4.50",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "CosmicScans.id",
+        "lang": "id",
+        "id": "6559481336553833282",
+        "baseUrl": "https://lc6.cosmicscans.asia",
         "versionId": 1
       }
     ]
@@ -2524,6 +2997,24 @@
         "lang": "id",
         "id": "1764268677652741702",
         "baseUrl": "https://hentaicrot.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Kiryuu",
+    "pkg": "eu.kanade.tachiyomi.extension.id.kiryuu",
+    "apk": "tachiyomi-id.kiryuu-v1.4.51.apk",
+    "lang": "id",
+    "code": 51,
+    "version": "1.4.51",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Kiryuu",
+        "lang": "id",
+        "id": "3639673976007021338",
+        "baseUrl": "https://v5.kiryuu.to",
         "versionId": 1
       }
     ]
@@ -2650,6 +3141,24 @@
         "lang": "id",
         "id": "5845004992097969882",
         "baseUrl": "https://id.mgkomik.cc",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Natsu",
+    "pkg": "eu.kanade.tachiyomi.extension.id.natsu",
+    "apk": "tachiyomi-id.natsu-v1.4.33.apk",
+    "lang": "id",
+    "code": 33,
+    "version": "1.4.33",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Natsu",
+        "lang": "id",
+        "id": "778073414277513172",
+        "baseUrl": "https://natsu.tv",
         "versionId": 1
       }
     ]
@@ -2813,6 +3322,24 @@
         "id": "1056568527385317039",
         "baseUrl": "https://webcomic.ohtabooks.com",
         "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Rawkuma",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.rawkuma",
+    "apk": "tachiyomi-ja.rawkuma-v1.4.37.apk",
+    "lang": "ja",
+    "code": 37,
+    "version": "1.4.37",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Rawkuma",
+        "lang": "ja",
+        "id": "5746834068092446709",
+        "baseUrl": "https://rawkuma.net",
+        "versionId": 2
       }
     ]
   },
@@ -3086,6 +3613,42 @@
     ]
   },
   {
+    "name": "Tachiyomi: Manga Stop",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.mangastop",
+    "apk": "tachiyomi-pt.mangastop-v1.4.40.apk",
+    "lang": "pt-BR",
+    "code": 40,
+    "version": "1.4.40",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Manga Stop",
+        "lang": "pt-BR",
+        "id": "924359643993288771",
+        "baseUrl": "https://mangastop.net",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Lura Toon",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.randomscan",
+    "apk": "tachiyomi-pt.randomscan-v1.4.58.apk",
+    "lang": "pt-BR",
+    "code": 58,
+    "version": "1.4.58",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Lura Toon",
+        "lang": "pt-BR",
+        "id": "1108163814448330624",
+        "baseUrl": "https://luratoons.net",
+        "versionId": 2
+      }
+    ]
+  },
+  {
     "name": "Tachiyomi: NoxManga",
     "pkg": "eu.kanade.tachiyomi.extension.pt.remangas",
     "apk": "tachiyomi-pt.remangas-v1.4.51.apk",
@@ -3099,6 +3662,42 @@
         "lang": "pt-BR",
         "id": "7462657023971681136",
         "baseUrl": "https://noxmanga.co",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: RF Dragon Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.rfdragonscan",
+    "apk": "tachiyomi-pt.rfdragonscan-v1.4.9.apk",
+    "lang": "pt-BR",
+    "code": 9,
+    "version": "1.4.9",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "RF Dragon Scan",
+        "lang": "pt-BR",
+        "id": "3492404357721425345",
+        "baseUrl": "https://rfdragonscan.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Sakura Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.sakuramangas",
+    "apk": "tachiyomi-pt.sakuramangas-v1.4.5.apk",
+    "lang": "pt-BR",
+    "code": 5,
+    "version": "1.4.5",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "Sakura Mangás",
+        "lang": "pt-BR",
+        "id": "5312747352055987615",
+        "baseUrl": "https://sakuramangas.org",
         "versionId": 1
       }
     ]
@@ -3136,6 +3735,24 @@
         "id": "9191031408908163145",
         "baseUrl": "https://winterscan.com",
         "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Yugen Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.yugenmangas",
+    "apk": "tachiyomi-pt.yugenmangas-v1.4.50.apk",
+    "lang": "pt-BR",
+    "code": 50,
+    "version": "1.4.50",
+    "nsfw": 0,
+    "sources": [
+      {
+        "name": "Yugen Mangás",
+        "lang": "pt-BR",
+        "id": "8900485893586998299",
+        "baseUrl": "https://yugenmangasbr.dxtg.online",
+        "versionId": 2
       }
     ]
   },
@@ -3567,6 +4184,24 @@
         "lang": "vi",
         "id": "8070257113818912648",
         "baseUrl": "https://mimihentai.net",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: Baka Manhua",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.bakamh",
+    "apk": "tachiyomi-zh.bakamh-v1.4.54.apk",
+    "lang": "zh",
+    "code": 54,
+    "version": "1.4.54",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "巴卡漫画",
+        "lang": "zh",
+        "id": "3712194609356981776",
+        "baseUrl": "https://bakamh.com",
         "versionId": 1
       }
     ]
