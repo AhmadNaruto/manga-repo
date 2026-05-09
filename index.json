@@ -5596,10 +5596,10 @@
   {
     "name": "Tachiyomi: NovelCool",
     "pkg": "eu.kanade.tachiyomi.extension.all.novelcool",
-    "apk": "tachiyomi-all.novelcool-v1.4.6.apk",
+    "apk": "tachiyomi-all.novelcool-v1.4.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "1.4.6",
+    "code": 7,
+    "version": "1.4.7",
     "nsfw": 1,
     "sources": [
       {
@@ -8044,10 +8044,10 @@
   {
     "name": "Tachiyomi: Atsumaru",
     "pkg": "eu.kanade.tachiyomi.extension.en.atsumaru",
-    "apk": "tachiyomi-en.atsumaru-v1.4.16.apk",
+    "apk": "tachiyomi-en.atsumaru-v1.4.17.apk",
     "lang": "en",
-    "code": 16,
-    "version": "1.4.16",
+    "code": 17,
+    "version": "1.4.17",
     "nsfw": 1,
     "sources": [
       {
@@ -9898,10 +9898,10 @@
   {
     "name": "Tachiyomi: Hentara",
     "pkg": "eu.kanade.tachiyomi.extension.en.hentara",
-    "apk": "tachiyomi-en.hentara-v1.4.1.apk",
+    "apk": "tachiyomi-en.hentara-v1.4.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.4.1",
+    "code": 2,
+    "version": "1.4.2",
     "nsfw": 1,
     "sources": [
       {
@@ -10078,10 +10078,10 @@
   {
     "name": "Tachiyomi: InfinityScans",
     "pkg": "eu.kanade.tachiyomi.extension.en.infinityscans",
-    "apk": "tachiyomi-en.infinityscans-v1.4.7.apk",
+    "apk": "tachiyomi-en.infinityscans-v1.4.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "1.4.7",
+    "code": 8,
+    "version": "1.4.8",
     "nsfw": 1,
     "sources": [
       {
@@ -10312,10 +10312,10 @@
   {
     "name": "Tachiyomi: Kayn Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.kaynscans",
-    "apk": "tachiyomi-en.kaynscans-v1.4.18.apk",
+    "apk": "tachiyomi-en.kaynscans-v1.4.19.apk",
     "lang": "en",
-    "code": 18,
-    "version": "1.4.18",
+    "code": 19,
+    "version": "1.4.19",
     "nsfw": 0,
     "sources": [
       {
@@ -10647,6 +10647,24 @@
         "lang": "en",
         "id": "4480996639887718467",
         "baseUrl": "https://lilymanga.net",
+        "versionId": 1
+      }
+    ]
+  },
+  {
+    "name": "Tachiyomi: LinkManga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.linkmanga",
+    "apk": "tachiyomi-en.linkmanga-v1.4.49.apk",
+    "lang": "en",
+    "code": 49,
+    "version": "1.4.49",
+    "nsfw": 1,
+    "sources": [
+      {
+        "name": "LinkManga",
+        "lang": "en",
+        "id": "8622937201319058235",
+        "baseUrl": "https://linkmanga.com",
         "versionId": 1
       }
     ]
@@ -17501,10 +17519,10 @@
   {
     "name": "Tachiyomi: ONF MANGAS",
     "pkg": "eu.kanade.tachiyomi.extension.es.onfmangas",
-    "apk": "tachiyomi-es.onfmangas-v1.4.2.apk",
+    "apk": "tachiyomi-es.onfmangas-v1.4.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "1.4.2",
+    "code": 3,
+    "version": "1.4.3",
     "nsfw": 1,
     "sources": [
       {
@@ -17573,10 +17591,10 @@
   {
     "name": "Tachiyomi: Ragnarok Scanlation",
     "pkg": "eu.kanade.tachiyomi.extension.es.ragnarokscanlation",
-    "apk": "tachiyomi-es.ragnarokscanlation-v1.4.51.apk",
+    "apk": "tachiyomi-es.ragnarokscanlation-v1.4.52.apk",
     "lang": "es",
-    "code": 51,
-    "version": "1.4.51",
+    "code": 52,
+    "version": "1.4.52",
     "nsfw": 0,
     "sources": [
       {
@@ -20496,10 +20514,10 @@
   {
     "name": "Tachiyomi: Omicaso",
     "pkg": "eu.kanade.tachiyomi.extension.id.omicaso",
-    "apk": "tachiyomi-id.omicaso-v1.4.34.apk",
+    "apk": "tachiyomi-id.omicaso-v1.4.35.apk",
     "lang": "id",
-    "code": 34,
-    "version": "1.4.34",
+    "code": 35,
+    "version": "1.4.35",
     "nsfw": 1,
     "sources": [
       {
@@ -21635,20 +21653,20 @@
     ]
   },
   {
-    "name": "Tachiyomi: DRE Comics",
+    "name": "Tachiyomi: DreComi+",
     "pkg": "eu.kanade.tachiyomi.extension.ja.drecomics",
-    "apk": "tachiyomi-ja.drecomics-v1.4.2.apk",
+    "apk": "tachiyomi-ja.drecomics-v1.4.3.apk",
     "lang": "ja",
-    "code": 2,
-    "version": "1.4.2",
-    "nsfw": 0,
+    "code": 3,
+    "version": "1.4.3",
+    "nsfw": 1,
     "sources": [
       {
-        "name": "DRE Comics",
+        "name": "DreComi+",
         "lang": "ja",
-        "id": "1192219287792216887",
-        "baseUrl": "https://drecom-media.jp",
-        "versionId": 1
+        "id": "8766832343449907432",
+        "baseUrl": "https://drecomi-plus.jp",
+        "versionId": 2
       }
     ]
   },
@@ -25974,10 +25992,10 @@
   {
     "name": "Tachiyomi: MangaKimi",
     "pkg": "eu.kanade.tachiyomi.extension.th.mangakimi",
-    "apk": "tachiyomi-th.mangakimi-v1.4.34.apk",
+    "apk": "tachiyomi-th.mangakimi-v1.4.35.apk",
     "lang": "th",
-    "code": 34,
-    "version": "1.4.34",
+    "code": 35,
+    "version": "1.4.35",
     "nsfw": 1,
     "sources": [
       {
@@ -26802,17 +26820,17 @@
   {
     "name": "Tachiyomi: Koreli Scans",
     "pkg": "eu.kanade.tachiyomi.extension.tr.koreliscans",
-    "apk": "tachiyomi-tr.koreliscans-v1.4.50.apk",
+    "apk": "tachiyomi-tr.koreliscans-v1.4.51.apk",
     "lang": "tr",
-    "code": 50,
-    "version": "1.4.50",
+    "code": 51,
+    "version": "1.4.51",
     "nsfw": 0,
     "sources": [
       {
         "name": "Koreli Scans",
         "lang": "tr",
         "id": "1475942648540931708",
-        "baseUrl": "https://nabimanga.com",
+        "baseUrl": "https://www.nabicix.com",
         "versionId": 1
       }
     ]
@@ -27810,18 +27828,18 @@
   {
     "name": "Tachiyomi: DGManga",
     "pkg": "eu.kanade.tachiyomi.extension.uk.dgmanga",
-    "apk": "tachiyomi-uk.dgmanga-v1.4.1.apk",
+    "apk": "tachiyomi-uk.dgmanga-v1.4.2.apk",
     "lang": "uk",
-    "code": 1,
-    "version": "1.4.1",
+    "code": 2,
+    "version": "1.4.2",
     "nsfw": 1,
     "sources": [
       {
         "name": "DGManga",
         "lang": "uk",
-        "id": "1138339770275260853",
+        "id": "8158890639660553015",
         "baseUrl": "https://dgmanga.app",
-        "versionId": 1
+        "versionId": 2
       }
     ]
   },
